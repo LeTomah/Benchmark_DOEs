@@ -1,1 +1,3 @@
 pandapower
+matplotlib
+networkx
