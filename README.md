@@ -20,6 +20,15 @@ The required data for running the code is available in the `Data` folder. The da
 ### For Desktop
 To run the methodology, follow these steps:
 
+1. Clone the repository:
+   ```bash
+   https://github.com/LeTomah/Benchmark_DOEs.git
+   cd Benchmark
+   
+2. Install the required packages:
+   ```bash
+   pip install -r requirements.txt
+
 ### For Colab
 To run the methodology, follow these steps:
 
