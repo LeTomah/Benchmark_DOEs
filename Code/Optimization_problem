@@ -1,0 +1,4 @@
+import digraph
+import test_network
+
+digraph.create_digraph()
