@@ -128,9 +128,9 @@ def optim_problem():
 # -------------------------
 # Create an environment with your WLS license
     params = {
-        "WLSACCESSID": '295bde64-ffb2-46ce-92c9-af4e12ace58f',
-        "WLSSECRET": '2dc9e249-7d48-4e46-a099-71c52d5d7247',
-        "LICENSEID": 2689995
+        "WLSACCESSID": '',
+        "WLSSECRET": '',
+        "LICENSEID": 
         }
     env = gp.Env(params=params)
     solver = pyo.SolverFactory('gurobi')
