@@ -23,6 +23,8 @@ def create_network():
     b8 = pp.create_bus(net, vn_kv=Vbase_medium, name="Bus industriel", geodata=(10,10))
     b9 = pp.create_bus(net, vn_kv=Vbase_low, name="Bus load", geodata=(15,14))
     b10 = pp.create_bus(net, vn_kv=Vbase_low, name="Bus PV", geodata=(15,10))
+    b11 = pp.create_bus(net, vn_kv=Vbase_high, name="TSO 1", geodata=(2,12))
+    b12 = pp.create_bus(net, vn_kv=Vbase_high, name="TSO 2", geodata=(2,8))
 
 # Lignes
     pp.create_line(net, b0, b1, length_km=12, std_type='149-AL1/24-ST1A 110.0', name="line1")
@@ -32,6 +34,10 @@ def create_network():
     pp.create_line(net, b4, b8, length_km=0.3, std_type='NA2XS2Y 1x185 RM/25 12/20 kV', name="line5")
     pp.create_line(net, b5, b9, length_km=3, std_type='94-AL1/15-ST1A 0.4', name="line6")
     pp.create_line(net, b6, b10, length_km=0.45, std_type='94-AL1/15-ST1A 0.4', name="line7")
+    pp.create_line(net, b0, b11, length_km=16, std_type='149-AL1/24-ST1A 110.0', name= 'line8')
+    pp.create_line(net, b11, b1, length_km=24, std_type='149-AL1/24-ST1A 110.0', name= 'line9')
+    pp.create_line(net, b0, b12, length_km=22, std_type='149-AL1/24-ST1A 110.0', name= 'line10')
+    pp.create_line(net, b12, b2, length_km=16, std_type='149-AL1/24-ST1A 110.0', name= 'line11')
 
 # Transformateurs
     pp.create_transformer(net, b1, b3, std_type="25 MVA 110/20 kV", name="TR_1")
@@ -45,6 +51,8 @@ def create_network():
     pp.create_gen(net, bus=b10, p_mw=0.2, vm_pu=1.00, name="PV", max_q_mvar=200, min_q_mvar=0, max_p_mw=300, min_p_mw=0, controllable=False)
     pp.create_gen(net, bus=b7, p_mw=6.5, vm_pu=1.0, name="Wind Turbine", controllable=False)
     pp.create_load(net, bus=b8, p_mw=6, q_mvar=1.8, name="Industry")
+    pp.create_load(net, bus=b11, p_mw=20, q_mvar=9, name="Datacenter")
+    pp.create_load(net, bus=b12, p_mw=50, q_mvar=24, name="Big industry")
     
 # Donner accès à net
     return net
