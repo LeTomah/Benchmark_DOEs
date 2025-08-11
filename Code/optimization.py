@@ -4,7 +4,6 @@ def optim_problem(test_case,
                   children_nodes=None):
     import digraph
     import pyo_environment
-    import numpy as np
     import pyomo.environ as pyo
     import gurobipy as gp
 

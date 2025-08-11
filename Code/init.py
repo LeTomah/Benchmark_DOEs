@@ -12,7 +12,7 @@ from check_requirements import install_missing_packages
 from optimization import optim_problem
 
 # ---- Paramétrage utilisateur ----
-TEST_CASE = "network_test.py"           # Chemin de votre fichier IEEE
+TEST_CASE = "Networks/network_test.py"           # Chemin de votre fichier IEEE
 OPERATIONAL_NODES = [0,1,2,11,12]    # Nœuds conservés dans le sous-réseau
 PARENT_NODES      = [0]             # Injectent la puissance (P_plus)
 CHILDREN_NODES    = [1,2]       # Absorbent la puissance (P_minus)

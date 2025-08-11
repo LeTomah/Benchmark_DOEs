@@ -1,4 +1,10 @@
 def load_network(test_case):
+    """
+    Permet de charger correctement l'import du réseau test, suivant sa nature (fichier python PandaPower,
+    ou MatPower avec la convention IEEE).
+    :param test_case: nom du fichier .txt ou .py contenant le réseau test.
+    :return: réseau type PandaPower lisible par le code.
+    """
     import os, importlib.util, pandapower as pp
     from IEEE_to_pp import import_ieee_txt_to_pandapower
 
