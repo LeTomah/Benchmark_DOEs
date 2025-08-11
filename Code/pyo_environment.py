@@ -19,10 +19,17 @@ def create_pyo_environ(test_case,
     # Création du modèle
     m = pyo.ConcreteModel()
 
-    m.Nodes = pyo.Set(initialize=operational_nodes)
+    s_base = 100  # MVA
+    v_base_high = 110  # kV
+
+    m.Nodes = pyo.Set(initialize=[b for b in G.nodes])
     m.Lines = pyo.Set(initialize=[l for l in G.edges])
-    m.i = pyo.Set(initialize=[b for b in range(2)])
-    m.j = pyo.Set(initialize=[b for b in range(2)])
+    m.i = pyo.Set(initialize=[0, 1])  # Initialize m.i with two generic elements
+    m.j = pyo.Set(initialize=[0, 1])
+    m.children = pyo.Set(initialize=[1, 2])
+    m.parents = pyo.Set(initialize=[0])
+
+    m.P = pyo.Param(m.Nodes, initialize={n: - G.nodes[n].get('P') for n in G.nodes}, domain=pyo.Reals, mutable=True)
 
     # --- Définir parents/enfants dynamiquement ---
     if parent_nodes is None:
@@ -38,14 +45,17 @@ def create_pyo_environ(test_case,
     m.theta = pyo.Var(m.Nodes, m.i, m.j, domain=pyo.Reals)  # phase angle of the voltage
     m.V = pyo.Var(m.Nodes, m.i, m.j, domain=pyo.NonNegativeReals)  # voltage magnitude at each node
     m.E = pyo.Var(m.Nodes, m.i, m.j, domain=pyo.Reals)  # net power injection/consumption
-
-    m.P_C_set = pyo.Var(m.children, m.i, domain=pyo.Reals)  # vertices of the power envelope at each child node
     m.P_plus = pyo.Var(m.parents, m.i, m.j, domain=pyo.Reals)  # power entering the operational graph
     m.P_minus = pyo.Var(m.children, m.i, m.j, domain=pyo.Reals)  # power leaving the operational graph
-    m.P_C_min = pyo.Var(m.children, m.i, m.j, domain=pyo.Reals)
-    m.P_C_max = pyo.Var(m.children, m.i, m.j, domain=pyo.Reals)
 
-    m.O = pyo.Var(domain=pyo.Reals)
+    m.P_C_set = pyo.Var(m.children, m.i, domain=pyo.Reals)  # vertices of the power envelope at each child node
+
+    # m.P_C_min = pyo.Var(m.children, m.i, m.j, domain=pyo.Reals)
+    # m.P_C_max = pyo.Var(m.children, m.i, m.j,  domain=pyo.Reals)
+
+    m.V_P = pyo.Param(m.j, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
+
+    m.O = pyo.Var(domain=pyo.NonNegativeReals)
 
     # Parameters definition
     I_min = pyo.Param(initialize=0.8)
@@ -53,6 +63,20 @@ def create_pyo_environ(test_case,
 
     m.V_P = pyo.Param(m.j, default=1, domain=pyo.NonNegativeReals)
     m.P = pyo.Param(m.Nodes, default=1, domain=pyo.Reals)
+
+    def get_node_voltage_kv(node_index):
+        """
+        Returns the voltage (vn_kv) for a given node index from the graph.
+
+        Args:
+          node_index: The index of the node in the graph.
+
+        Returns:
+          The voltage in kV for the specified node.
+        """
+        # Assuming 'G' is the NetworkX DiGraph object created earlier
+        # Access the 'vn_kv' attribute for the given node_index
+        return G.nodes[node_index]['vn_kv']
 
     # Calculate the susceptance of each line in Siemens per km
     for u, v, data in G.edges(data=True):
@@ -63,65 +87,16 @@ def create_pyo_environ(test_case,
     # u, v = 0, 1  # identifiants des nœuds
     # print("b de l'arête (0 → 1) :", G[u][v].get("b", "non défini"))
 
-    # Compute the PTDF matrix using branch susceptance diagonal and incidence matrix.
-    def compute_PTDF(G, ref_bus=None):
-        """
-    Parameters:
-        G (networkx.DiGraph): Graph with 'b' (susceptance) on edges.
-        ref_bus (str): Slack bus node label. If None, first node is slack.
-
-    Returns:
-        PTDF (np.ndarray): PTDF matrix of shape (num_branches, num_buses)
-        node_list (List[str]): Ordered list of nodes
-        edge_list (List[tuple]): Ordered list of edges
-    """
-
-        # Get nodes and edges
-        edge_list = list(G.edges())
-        node_list = list(G.nodes())
-        m = len(edge_list)
-        n = len(node_list)
-
-        # Build incidence matrix (rows: edges, columns: nodes)
-        A = np.zeros((m, n))
-        node_index = {node: i for i, node in enumerate(node_list)}
-
-        for idx, (u, v) in enumerate(edge_list):
-            A[idx, node_index[u]] = 1
-            A[idx, node_index[v]] = -1
-
-        # Slack bus
-        if ref_bus is None:
-            ref_bus = node_list[0]
-            slack_idx = node_index[ref_bus]
-        else:
-            slack_idx = node_index[ref_bus]
-        # Remove slack bus column from A
-        A_red = np.delete(A, slack_idx, axis=1)  # shape (m, n-1)
-
-        # Branch susceptance diagonal matrix Bd
-        b_values = np.array([G[u][v].get('b', 1.0) for u, v in edge_list])
-        Bd = np.diag(b_values)  # shape (m, m)
-
-        # Compute PTDF
-        At = A_red.T  # (n-1, m)
-        AtBd = At @ Bd  # (n-1, m)
-        AtBdA = AtBd @ A_red  # (n-1, n-1)
-
-        AtBdA_inv = np.linalg.inv(AtBdA)  # (n-1, n-1)
-
-        PTDF_red = Bd @ A_red @ AtBdA_inv  # (m, n-1)
-
-        # Insert zero column for slack bus back into PTDF matrix
-        PTDF = np.insert(PTDF_red, slack_idx, 0, axis=1)  # shape (m, n)
-
-        return PTDF, node_list, edge_list
-
-    PTDF, node_list, edge_list = compute_PTDF(G, ref_bus=0)
-    node_to_idx = {node: i for i, node in enumerate(node_list)}
-    edge_to_idx = {edge: i for i, edge in enumerate(edge_list)}
-
-    print(PTDF)
+    # Convert susceptance 'b' on edges to per-unit
+    for u, v in G.edges():
+        # Assuming 'b' is in Siemens/km, convert to per-unit
+        # b_pu = b_actual * (V_base^2 / S_base)
+        # V_base is assumed to be v_base_high (110 kV)
+        G[u][v]['b_pu'] = G[u][v].get('b', 0.0) * (get_node_voltage_kv(u) ** 2 / s_base)
+    print(m.P[11].value)
+    print("Converted power values (P) in G and m.P to per-unit.")
+    print("Converted susceptance values (b) in G edges to per-unit.")
+    print("Voltage and Current bounds assumed to be already in per-unit.")
 
 # Donner accès à m :
-    return m, PTDF, node_to_idx, edge_to_idx
+    return m

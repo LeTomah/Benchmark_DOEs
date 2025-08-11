@@ -1,9 +1,14 @@
+from pathlib import Path
+
 def install_missing_packages(requirements_file='requirements.txt'):
     import importlib.util
     import subprocess
     import sys
 
-    with open(requirements_file, 'r') as file:
+    # Construire le chemin absolu vers requirements.txt
+    requirements_path = Path(__file__).parent.parent / "requirements.txt"
+
+    with open(requirements_path, 'r') as file:
         packages = [line.strip() for line in file if line.strip() and not line.startswith('#')]
 
     for package in packages:
