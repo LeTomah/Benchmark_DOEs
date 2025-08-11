@@ -4,9 +4,9 @@ def create_pyo_environ(test_case,
                        children_nodes=None):
     import digraph
     import pyomo.environ as pyo
-
     # Charger le graphe complet
     G_full = digraph.create_digraph(test_case)
+    s_base = G_full.graph["s_base"]
 
     # Si l'utilisateur ne donne rien, on prend tous les nœuds
     if operational_nodes is None:
@@ -17,9 +17,6 @@ def create_pyo_environ(test_case,
 
     # Création du modèle
     m = pyo.ConcreteModel()
-
-    s_base = 100  # MVA
-    v_base_high = 110  # kV
 
     m.Nodes = pyo.Set(initialize=[b for b in G.nodes])
     m.Lines = pyo.Set(initialize=[l for l in G.edges])
@@ -54,41 +51,13 @@ def create_pyo_environ(test_case,
 
     m.O = pyo.Var(domain=pyo.NonNegativeReals)
 
+    # Calcul du per unit
     for u in G.nodes():
         if G.nodes[u].get('P', 0.0) / s_base == 0:
             m.P[u] = 0
         else:
             G.nodes[u]['P_pu'] = G.nodes[u].get('P', 0.0) / s_base
             m.P[u] = - G.nodes[u]['P_pu']
-
-    def get_node_voltage_kv(node_index):
-        """
-        Returns the voltage (vn_kv) for a given node index from the graph.
-
-        Args:
-          node_index: The index of the node in the graph.
-
-        Returns:
-          The voltage in kV for the specified node.
-        """
-        # Assuming 'G' is the NetworkX DiGraph object created earlier
-        # Access the 'vn_kv' attribute for the given node_index
-        return G.nodes[node_index]['vn_kv']
-
-    # Calculate the susceptance of each line in Siemens per km
-    for u, v, data in G.edges(data=True):
-        if "length" in data:  # Vérifie que l'arête a bien une longueur
-            L = data["length"]  # Récupère la longueur en km
-            G[u][v]['b'] = L * 200e-6  # Calcule et stocke 'b'
-
-    # Convert susceptance 'b' on edges to per-unit
-    for u, v in G.edges():
-        """
-        Assuming 'b' is in Siemens/km, convert to per-unit
-        b_pu = b_actual * (V_base^2 / S_base)
-        V_base is assumed to be v_base_high (110 kV)
-        """
-        G[u][v]['b_pu'] = G[u][v].get('b', 0.0) * (get_node_voltage_kv(u) ** 2 / s_base)
 
     # Donner accès à m :
     return m

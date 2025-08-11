@@ -175,15 +175,9 @@ def optim_problem(test_case,
     m.alpha = pyo.Param(initialize=1)
 
     def objective_rule(m):
-        somme = 0
-        for child in m.children:  # Iterate over the elements in m.children
-            for i in m.i:
-                for j in m.j:
-                    somme += m.P_C_min[child, i, j] + m.P_C_max[child, i, j]  # Use 'child' as the index
+        return sum(m.aux[n] for n in m.children) - alpha * m.O
 
-        return somme - m.alpha * m.O
-
-    m.Objective = pyo.Objective(rule=objective_rule, sense=pyo.maximize)
+    m.objective = pyo.Objective(rule=objective_rule, sense=pyo.maximize)
 
     # -------------------------
     # Résolution
