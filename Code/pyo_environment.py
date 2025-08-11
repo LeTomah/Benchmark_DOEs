@@ -53,15 +53,12 @@ def create_pyo_environ(test_case,
     # m.P_C_min = pyo.Var(m.children, m.i, m.j, domain=pyo.Reals)
     # m.P_C_max = pyo.Var(m.children, m.i, m.j,  domain=pyo.Reals)
 
-    m.V_P = pyo.Param(m.j, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
-
     m.O = pyo.Var(domain=pyo.NonNegativeReals)
 
     # Parameters definition
     I_min = pyo.Param(initialize=0.8)
     I_max = pyo.Param(initialize=1.2)
 
-    m.V_P = pyo.Param(m.j, default=1, domain=pyo.NonNegativeReals)
     m.P = pyo.Param(m.Nodes, default=1, domain=pyo.Reals)
 
     def get_node_voltage_kv(node_index):
@@ -93,10 +90,6 @@ def create_pyo_environ(test_case,
         # b_pu = b_actual * (V_base^2 / S_base)
         # V_base is assumed to be v_base_high (110 kV)
         G[u][v]['b_pu'] = G[u][v].get('b', 0.0) * (get_node_voltage_kv(u) ** 2 / s_base)
-    print(m.P[11].value)
-    print("Converted power values (P) in G and m.P to per-unit.")
-    print("Converted susceptance values (b) in G edges to per-unit.")
-    print("Voltage and Current bounds assumed to be already in per-unit.")
 
 # Donner accès à m :
     return m

@@ -21,9 +21,9 @@ def create_digraph(test_case):
         coordinates = geo_dict["coordinates"]
         pos[idx] = tuple(coordinates)
 
-    # Ajouter les nœuds (avec le nom comme label)
+    # Ajouter les nœuds
     for idx, row in net.bus.iterrows():
-        G.add_node(idx, label=row["name"], pos=pos[idx])
+        G.add_node(idx, label=row["name"], pos=pos[idx], vn_kv=row["vn_kv"])
 
     # Ajouter les arêtes pour les lignes
     for _, row in net.line.iterrows():
@@ -69,6 +69,8 @@ def create_digraph(test_case):
     # Calcul de P_net
     for n in G.nodes:
         G.nodes[n]["P_net"] = G.nodes[n]["P_gen"] - G.nodes[n]["P_load"]
+    for n in G.nodes:
+        G.nodes[n]["P"] = G.nodes[n]["P_net"]  # Assign P_net to 'P' attribute
 
     # -------------------------
     # 3. Préparer les couleurs des nœuds en fonction de P_net
@@ -130,4 +132,4 @@ def plot_network(G):
 
 
 if __name__ == "__main__":
-    create_digraph("Case_14.txt")
+    create_digraph("network_test.py")
