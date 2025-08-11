@@ -4,7 +4,6 @@ def create_pyo_environ(test_case,
                        children_nodes=None):
     import digraph
     import pyomo.environ as pyo
-    import numpy as np
 
     # Charger le graphe complet
     G_full = digraph.create_digraph(test_case)
@@ -26,8 +25,6 @@ def create_pyo_environ(test_case,
     m.Lines = pyo.Set(initialize=[l for l in G.edges])
     m.i = pyo.Set(initialize=[0, 1])  # Initialize m.i with two generic elements
     m.j = pyo.Set(initialize=[0, 1])
-    m.children = pyo.Set(initialize=[1, 2])
-    m.parents = pyo.Set(initialize=[0])
 
     m.P = pyo.Param(m.Nodes, initialize={n: - G.nodes[n].get('P') for n in G.nodes}, domain=pyo.Reals, mutable=True)
 
@@ -53,13 +50,16 @@ def create_pyo_environ(test_case,
     # m.P_C_min = pyo.Var(m.children, m.i, m.j, domain=pyo.Reals)
     # m.P_C_max = pyo.Var(m.children, m.i, m.j,  domain=pyo.Reals)
 
+    m.V_P = pyo.Param(m.j, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
+
     m.O = pyo.Var(domain=pyo.NonNegativeReals)
 
-    # Parameters definition
-    I_min = pyo.Param(initialize=0.8)
-    I_max = pyo.Param(initialize=1.2)
-
-    m.P = pyo.Param(m.Nodes, default=1, domain=pyo.Reals)
+    for u in G.nodes():
+        if G.nodes[u].get('P', 0.0) / s_base == 0:
+            m.P[u] = 0
+        else:
+            G.nodes[u]['P_pu'] = G.nodes[u].get('P', 0.0) / s_base
+            m.P[u] = - G.nodes[u]['P_pu']
 
     def get_node_voltage_kv(node_index):
         """
@@ -81,9 +81,6 @@ def create_pyo_environ(test_case,
             L = data["length"]  # Récupère la longueur en km
             G[u][v]['b'] = L * 200e-6  # Calcule et stocke 'b'
 
-    # u, v = 0, 1  # identifiants des nœuds
-    # print("b de l'arête (0 → 1) :", G[u][v].get("b", "non défini"))
-
     # Convert susceptance 'b' on edges to per-unit
     for u, v in G.edges():
         """
@@ -93,5 +90,8 @@ def create_pyo_environ(test_case,
         """
         G[u][v]['b_pu'] = G[u][v].get('b', 0.0) * (get_node_voltage_kv(u) ** 2 / s_base)
 
-# Donner accès à m :
+    # Donner accès à m :
     return m
+
+if __name__ == "__main__":
+    create_pyo_environ("network_test.py")

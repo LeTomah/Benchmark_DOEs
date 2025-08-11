@@ -68,18 +68,16 @@ def create_digraph(test_case):
 
     # Calcul de P_net
     for n in G.nodes:
-        G.nodes[n]["P_net"] = G.nodes[n]["P_gen"] - G.nodes[n]["P_load"]
-    for n in G.nodes:
-        G.nodes[n]["P"] = G.nodes[n]["P_net"]  # Assign P_net to 'P' attribute
+        G.nodes[n]["P"] = G.nodes[n]["P_gen"] - G.nodes[n]["P_load"]
 
     # -------------------------
     # 3. Préparer les couleurs des nœuds en fonction de P_net
     # -------------------------
     node_colors = []
     for n, data in G.nodes(data=True):
-        if data["P_net"] > 0:
+        if data["P"] > 0:
             node_colors.append("green")  # producteur
-        elif data["P_net"] < 0:
+        elif data["P"] < 0:
             node_colors.append("red")  # consommateur
         else:
             node_colors.append("gray")  # neutre
@@ -87,7 +85,7 @@ def create_digraph(test_case):
     # -------------------------
     # 4. Préparer les labels : Nom + P_net
     # -------------------------
-    labels = {n: f"{data['label']}\nP={round(data['P_net'], 2)}MW"
+    labels = {n: f"{data['label']}\nP={round(data['P'], 2)}MW"
               for n, data in G.nodes(data=True)}
 
     # -------------------------
@@ -112,7 +110,7 @@ def plot_network(G):
     ]
 
     plt.figure(figsize=(12, 8))
-    labels = {n: f"{d['label']}\nP={round(d['P_net'], 2)} MW"
+    labels = {n: f"{d['label']}\nP={round(d['P'], 2)} MW"
               for n, d in G.nodes(data=True)}
     nx.draw(
         G, pos,
