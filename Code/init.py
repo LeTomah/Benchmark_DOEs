@@ -5,6 +5,7 @@ Il suffit de choisir :
     • les nœuds opérationnels
     • les parents
     • les enfants
+Et de renseigner ses identifiants gurobi dans optimization.py (l.131->133)
 puis de lancer :  init.py
 """
 from check_requirements import install_missing_packages
