@@ -7,7 +7,7 @@ For more detailed information, refer to the paper [here](https://).
 
 ## Table of contents
 - [Introduction](#introduction)
-- [Required Data](#requireddata)
+- [Required Data](#required-data)
 - [Usage](#usage)
 
 ## Introduction
@@ -23,12 +23,10 @@ To run the methodology, follow these steps:
 1. Clone the repository:
    ```bash
    https://github.com/LeTomah/Benchmark_DOEs.git
-   cd Benchmark
-   
-2. Install the required packages:
-   ```bash
-   pip install -r requirements.txt
 
+2. Select your test case and the nodes you want for your graph. 
+
+3. Launch the code.
 ### For Colab
 To run the methodology, follow these steps:
 
