@@ -73,22 +73,6 @@ def create_digraph(test_case):
     for n in G.nodes:
         G.nodes[n]["P"] = G.nodes[n]["P_gen"] - G.nodes[n]["P_load"]
 
-
-
-    def get_node_voltage_kv(node_index):
-        """
-        Returns the voltage (vn_kv) for a given node index from the graph.
-
-        Args:
-          node_index: The index of the node in the graph.
-
-        Returns:
-          The voltage in kV for the specified node.
-        """
-        # Assuming 'G' is the NetworkX DiGraph object created earlier
-        # Access the 'vn_kv' attribute for the given node_index
-        return G.nodes[node_index]['vn_kv']
-
     # Calculate the susceptance of each line in Siemens per km
     for u, v, data in G.edges(data=True):
         if "length" in data:  # Vérifie que l'arête a bien une longueur
@@ -97,12 +81,10 @@ def create_digraph(test_case):
 
     # Convert susceptance 'b' on edges to per-unit
     for u, v in G.edges():
-        """
-        Assuming 'b' is in Siemens/km, convert to per-unit
+        """Assuming 'b' is in Siemens/km, convert to per-unit
         b_pu = b_actual * (V_base^2 / S_base)
-        V_base is assumed to be v_base_high (110 kV)
-        """
-        G[u][v]['b_pu'] = G[u][v].get('b', 0.0) * (get_node_voltage_kv(u) ** 2 / G.graph["s_base"])
+        V_base is assumed to be v_base_high (110 kV)"""
+        G[u][v]['b_pu'] = G[u][v].get('b', 0.0) * (G.nodes[u]['vn_kv'] ** 2 / G.graph["s_base"])
 
     # -------------------------
     # 3. Préparer les couleurs des nœuds en fonction de P
@@ -164,4 +146,4 @@ def plot_network(G):
 
 
 if __name__ == "__main__":
-    create_digraph("network_test.py")
+    create_digraph("Networks/network_test.py")

@@ -13,7 +13,7 @@ def create_pyo_environ(test_case,
         operational_nodes = list(G_full.nodes)
 
     # --- Définition du graphe opérationnel ---
-    G = G_full.subgraph(operational_nodes).copy()
+    G = G_full.subgraph(operational_nodes)
 
     # Création du modèle
     m = pyo.ConcreteModel()
@@ -63,4 +63,4 @@ def create_pyo_environ(test_case,
     return m
 
 if __name__ == "__main__":
-    create_pyo_environ("network_test.py")
+    create_pyo_environ("Networks/network_test.py")
