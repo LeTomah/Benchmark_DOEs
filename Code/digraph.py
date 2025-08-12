@@ -85,11 +85,11 @@ def create_digraph(test_case):
         """Assuming 'b' is in Siemens/km, convert to per-unit
         b_pu = b_actual * (V_base^2 / S_base)
         V_base is assumed to be v_base_high (110 kV)"""
-        G[u][v]['b_pu'] = G[u][v].get('b', 0.0) * (G.graph["v_base"]*10**3 ** 2 / (G.graph["s_base"]*10**6))
-#        print(f"Ligne {u}->{v} : b_pu = {G[u][v]['b_pu']} pu")
+        G[u][v]['b_pu'] = G[u][v].get('b', 0.0) * (G.graph["v_base"]**2 / (G.graph["s_base"]))
+        print(f"Ligne {u}->{v} : b_pu = {G[u][v]['b_pu']} pu")
 
     B_base = G.graph["s_base"]/(G.graph["v_base"]**2)
-#    print(B_base)
+    print(B_base)
 
     # -------------------------
     # 3. Préparer les couleurs des nœuds en fonction de P
