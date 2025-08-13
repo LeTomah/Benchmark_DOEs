@@ -34,8 +34,8 @@ def optim_problem(test_case,
     P_min = -2
     P_max = 2
 
-    theta_min = -200
-    theta_max = 200
+    theta_min = -180
+    theta_max = 180
 
     alpha = 1000
 
@@ -77,18 +77,15 @@ def optim_problem(test_case,
     def current_bounds_rule(m, i, j, vert_pow, vert_volt):
         # m.I is per-unit current
         return pyo.inequality(I_min, m.I[i, j, vert_pow, vert_volt], I_max)
-
     m.CurrentBounds = pyo.Constraint(m.Lines, m.i, m.j, rule=current_bounds_rule)
 
     def phase_constr_rule(m, n, vert_pow, vert_volt):
         return pyo.inequality(theta_min, m.theta[n, vert_pow, vert_volt], theta_max)
-
     m.phaseConstr = pyo.Constraint(m.Nodes, m.i, m.j, rule=phase_constr_rule)
 
     def dc_power_flow_rule(m, i, j, vert_pow, vert_volt):
         return m.F[i, j, vert_pow, vert_volt] == m.V_P[vert_volt] ** 2 * (G[i][j]['b_pu'] * (
-                m.theta[i, vert_pow, vert_volt] - m.theta[j, vert_pow, vert_volt])
-                                                                          )
+                m.theta[i, vert_pow, vert_volt] - m.theta[j, vert_pow, vert_volt]))
 
     m.DCFlow = pyo.Constraint(m.Lines, m.i, m.j, rule=dc_power_flow_rule)
 
@@ -140,7 +137,6 @@ def optim_problem(test_case,
 
     def aux_constraint_rule(m, n):
         return m.aux[n] == m.P_C_set[n, 0] - m.P_C_set[n, 1]
-
     m.aux_constraint = pyo.Constraint(m.children, rule=aux_constraint_rule)
 
     # -------------------------
@@ -172,7 +168,10 @@ def optim_problem(test_case,
     # Print the results
     print(results)
 
-
+    for n in m.Nodes:
+        for vert_pow in m.i:
+            for vert_volt in m.j:
+                print(f"theta ({n}):{m.theta[n, vert_pow, vert_volt].value}")
 
     import networkx as nx
     import matplotlib.pyplot as plt

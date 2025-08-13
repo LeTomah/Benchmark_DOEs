@@ -4,7 +4,6 @@ def create_digraph(test_case):
 
     import json
     import networkx as nx
-    import matplotlib.pyplot as plt
 
     # -------------------------
     # 1. Conversion du réseau Pandapower en DiGraph
@@ -27,15 +26,24 @@ def create_digraph(test_case):
 
     # Ajouter les nœuds
     for idx, row in net.bus.iterrows():
-        G.add_node(idx, label=row["name"], pos=pos[idx], vn_kv=row["vn_kv"])
+        G.add_node(idx,
+                   label=row["name"],
+                   pos=pos[idx],
+                   vn_kv=row["vn_kv"])
 
     # Ajouter les arêtes pour les lignes
     for _, row in net.line.iterrows():
-        G.add_edge(row["from_bus"], row["to_bus"], type="line", name=row["name"], length=row["length_km"])
+        G.add_edge(row["from_bus"], row["to_bus"],
+                   type="line",
+                   name=row["name"],
+                   length=row["length_km"],
+                   std_type=row["std_type"])
 
     # Ajouter les arêtes pour les transformateurs
     for _, row in net.trafo.iterrows():
-        G.add_edge(row["hv_bus"], row["lv_bus"], type="trafo", name=row["name"])
+        G.add_edge(row["hv_bus"], row["lv_bus"],
+                   type="trafo",
+                   name=row["name"])
 
     # Ajouter les générateurs et les charges comme attributs aux nœuds
     for _, row in net.gen.iterrows():
@@ -112,27 +120,18 @@ def create_digraph(test_case):
     # -------------------------
     # Donner accès à G
     # -------------------------
-    return G
+    return G, labels, node_colors
 
 
 # -------------------------
 # 5. Fonction d'affichage
 # -------------------------
-def plot_network(G):
+def plot_network(G, labels=None, node_colors=None):
     import networkx as nx, matplotlib.pyplot as plt
     pos = nx.get_node_attributes(G, 'pos')
 
-    # Couleurs des nœuds selon P_net
-    node_colors = [
-        "green" if d.get("P_net", 0) > 0 else
-        "red" if d.get("P_net", 0) < 0 else
-        "gray"
-        for _, d in G.nodes(data=True)
-    ]
-
     plt.figure(figsize=(12, 8))
-    labels = {n: f"{d['label']}\nP={round(d['P'], 2)} MW"
-              for n, d in G.nodes(data=True)}
+
     nx.draw(
         G, pos,
         with_labels=True, labels=labels,
