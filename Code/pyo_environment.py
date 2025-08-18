@@ -41,11 +41,14 @@ def create_pyo_environ(test_case,
     m.E = pyo.Var(m.Nodes, m.i, m.j, domain=pyo.Reals)  # net power injection/consumption
     m.P_plus = pyo.Var(m.parents, m.i, m.j, domain=pyo.Reals)  # power entering the operational graph
     m.P_minus = pyo.Var(m.children, m.i, m.j, domain=pyo.Reals)  # power leaving the operational graph
-
     m.P_C_set = pyo.Var(m.children, m.i, domain=pyo.Reals)  # vertices of the power envelope at each child node
+    m.aux = pyo.Var(m.children, domain=pyo.Reals)
 
-    # m.P_C_min = pyo.Var(m.children, m.i, m.j, domain=pyo.Reals)
-    # m.P_C_max = pyo.Var(m.children, m.i, m.j,  domain=pyo.Reals)
+    #Paramètres du modèle
+    m.info_DSO_param = pyo.Param(m.children, initialize = {n: info_DSO[n-1] for n in m.children}, domain = pyo.Reals) # Renamed parameter and adjusted index for list
+
+    m.I_min = pyo.Param(m.Lines, initialize = {(u,v): calculate_current_bounds(G.edges[u,v]["std_type"], G.nodes[u]['vn_kv'])[0] for (u,v) in m.Lines}, domain = pyo.Reals)
+    m.I_max = pyo.Param(m.Lines, initialize = {(u,v): calculate_current_bounds(G.edges[u,v]["std_type"], G.nodes[u]['vn_kv'])[1] for (u,v) in m.Lines}, domain = pyo.Reals)
 
     m.V_P = pyo.Param(m.j, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
 

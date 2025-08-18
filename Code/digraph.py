@@ -1,4 +1,4 @@
-def create_digraph(test_case):
+def create_graph(test_case):
     from loader import load_network
     net = load_network(test_case)
 
@@ -8,7 +8,7 @@ def create_digraph(test_case):
     # -------------------------
     # 1. Conversion du réseau Pandapower en DiGraph
     # -------------------------
-    G = nx.DiGraph()
+    G = nx.Graph()
 
     # 2. Récupération des positions à partir de la colonne 'geo'
     pos = {}
