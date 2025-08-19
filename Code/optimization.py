@@ -3,29 +3,22 @@ import pyo_environment
 import pyomo.environ as pyo
 import gurobipy as gp
 from loader import load_network
-def constraints(test_case,
-                  operational_nodes=None,
-                  parent_nodes=None,
-                  children_nodes=None,
-                  opf_only=False):
 
+
+def constraints(m, G):
 
     # Afficher les nœuds disponibles
-    G_full = graph.create_graph(test_case)
-
+    # G_full = graph.create_graph(test_case)
+    #
     # --- Model creation with these choices ---
-    m = pyo_environment.create_pyo_env(
-        test_case,
-        operational_nodes=operational_nodes,
-        parent_nodes=parent_nodes,
-        children_nodes=children_nodes
-    )
-    G = G_full.subgraph(operational_nodes)
-    graph.plot_network(G)
-
-    # -------------------------
-    # Constraints
-    # -------------------------
+    # m = pyo_environment.create_pyo_env(
+    #     test_case,
+    #     operational_nodes=operational_nodes,
+    #     parent_nodes=parent_nodes,
+    #     children_nodes=children_nodes
+    # )
+    # G = G_full.subgraph(operational_nodes)
+    # graph.plot_network(G)
 
     # Constant definition
     V_min, V_max = 0, 100
@@ -36,12 +29,12 @@ def constraints(test_case,
     beta = 1
 
 #Consommation aux noeuds enfants
-    info_DSO_node1 = m.F[1, 3, 0, 0].value
-    info_DSO_node2 = m.F[2, 4, 0, 0].value
-    print(info_DSO_node1)
-    print(info_DSO_node2)
-
-    info_DSO = [info_DSO_node1, info_DSO_node2]
+    # info_DSO_node1 = m.F[1, 3, 0, 0].value
+    # info_DSO_node2 = m.F[2, 4, 0, 0].value
+    # print("info_DSO_1: ", info_DSO_node1)
+    # print("info_DSO_2: ",info_DSO_node2)
+    #
+    # info_DSO = [info_DSO_node1, info_DSO_node2]
 
     # Children nodes consumption
     def worst_case_children(m, u, vert_pow, vert_volt):
@@ -93,16 +86,18 @@ def constraints(test_case,
         return m.I[u, v, vert_pow, vert_volt] * m.V_P[vert_volt] == m.F[u, v, vert_pow, vert_volt]
     m.current_def = pyo.Constraint(m.Nodes, m.Lines, m.i, m.j, rule=current_def_rule)
 
-    def nodes_balance(m, u, vert_pow, vert_volt):
-        inflow = sum(m.F[k, u, vert_pow, vert_volt] for k in G.predecessors(u) if (k, u) in m.Lines)
-        outflow = sum(m.F[u, j, vert_pow, vert_volt] for j in G.successors(u) if (u, j) in m.Lines)
-        if u in m.parents:
-            return inflow - outflow == m.E[u, vert_pow, vert_volt] - m.P_plus[u, vert_pow, vert_volt]
-        if u in m.children:
-            return inflow - outflow == m.E[u, vert_pow, vert_volt] + m.P_minus[u, vert_pow, vert_volt]
+    def power_balance_rule(m, n, vert_pow, vert_volt):
+        # Compute net flow into node n by summing over all lines (i,j) in m.Lines
+        expr = sum(
+            (m.F[i, j, vert_pow, vert_volt] if j == n else 0)
+            - (m.F[i, j, vert_pow, vert_volt] if i == n else 0)
+            for (i, j) in m.Lines)
+        # If n is a parent node, subtract P_plus; otherwise use only E[n]
+        if n in m.parents:
+            return expr == m.E[n, vert_pow, vert_volt] - m.P_plus[n, vert_pow, vert_volt]
         else:
-            return inflow - outflow == m.E[u, vert_pow, vert_volt]
-    m.nodes_balance = pyo.Constraint(m.Nodes, m.i, m.j, rule=nodes_balance)
+            return expr == m.E[n, vert_pow, vert_volt]
+    m.power_balance = pyo.Constraint(m.Nodes, m.i, m.j, rule=power_balance_rule)
 
     def parent_power_constraint_rule(m, parent, vert_pow, vert_volt):
         # m.P_plus is per-unit power entering the operational graph
@@ -230,7 +225,7 @@ def optim_problem(test_case,
     results = solver.solve(m, tee=True)
 
     # Print the results
-    print(results)
+    print("results: ", results)
 
     for n in m.Nodes:
         for vert_pow in m.i:

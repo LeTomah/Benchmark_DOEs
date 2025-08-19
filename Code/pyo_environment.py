@@ -1,5 +1,6 @@
 # pyo_environment.py
 from typing import Dict, Any, Set, Optional
+
 from app_types import EnvPyo
 import pyomo.environ as pyo
 
@@ -51,15 +52,21 @@ def create_pyo_env(graph,
     m.aux = pyo.Var(m.children, domain=pyo.Reals)
 
     #Paramètres du modèle
-    m.info_DSO_param = pyo.Param(m.children, initialize = {n: info_DSO[n-1] for n in m.children}, domain = pyo.Reals) # Renamed parameter and adjusted index for list
+    info_DSO = info_DSO or {}
+    m.info_DSO_param = pyo.Param(
+        m.children,
+        initialize={n: float(info_DSO.get(n, 0.0)) for n in m.children},
+        domain=pyo.Reals
+    )
 
-    m.I_min = pyo.Param(m.Lines, initialize = {(u,v): calculate_current_bounds(G.edges[u,v]["std_type"], G.nodes[u]['vn_kv'])[0] for (u,v) in m.Lines}, domain = pyo.Reals)
-    m.I_max = pyo.Param(m.Lines, initialize = {(u,v): calculate_current_bounds(G.edges[u,v]["std_type"], G.nodes[u]['vn_kv'])[1] for (u,v) in m.Lines}, domain = pyo.Reals)
+
+    m.I_min = pyo.Param(m.Lines, initialize={e: I_min for e in m.Lines}, domain=pyo.Reals)
+    m.I_max = pyo.Param(m.Lines, initialize={e: I_max for e in m.Lines}, domain=pyo.Reals)
 
     m.V_P = pyo.Param(m.j, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
-
+    m.tot = pyo.Var(domain= pyo.Reals)
     m.O = pyo.Var(domain=pyo.NonNegativeReals)
-
+    m.diff_DSO = pyo.Var(m.children, domain=pyo.NonNegativeReals)
     # Calcul du per unit
     for u in G.nodes():
         if G.nodes[u].get('P', 0.0) / s_base == 0:

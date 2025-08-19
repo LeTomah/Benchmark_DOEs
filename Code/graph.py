@@ -3,10 +3,7 @@ import networkx as nx
 from typing import Dict, Any, Set
 from app_types import GraphBundle
 
-def create_graph(net: Dict[str, Any]) -> GraphBundle:
-    from loader import load_network
-    net = load_network(net)
-
+def create_graph(net: Any) -> nx.Graph:
     # -------------------------
     # 1. Conversion du réseau Pandapower en DiGraph
     # -------------------------
@@ -96,10 +93,10 @@ def create_graph(net: Dict[str, Any]) -> GraphBundle:
         b_pu = b_actual * (V_base^2 / S_base)
         V_base is assumed to be v_base_high (110 kV)"""
         G[u][v]['b_pu'] = G[u][v].get('b', 0.0) * (G.graph["v_base"]**2 / (G.graph["s_base"]))
-        print(f"Ligne {u}->{v} : b_pu = {G[u][v]['b_pu']} pu")
+        print(f"Ligne {u}->{v}: b_pu = {G[u][v]['b_pu']} pu")
 
     B_base = G.graph["s_base"]/(G.graph["v_base"]**2)
-    print(B_base)
+    print("B_base: ", B_base)
 
     # -------------------------
     # Donner accès à G

@@ -10,10 +10,12 @@ def load_network(test_case):
 
     # 1) Déjà un objet pandapower ?
     if isinstance(test_case, pp.pandapowerNet):
+        print('OK')
         return test_case
 
     # 2) Chaîne de caractères = chemin de fichier
     if not isinstance(test_case, str):
+        print()
         raise TypeError("test_case doit être un chemin ou un objet pandapowerNet")
 
     ext = os.path.splitext(test_case)[1].lower()
@@ -31,15 +33,22 @@ def load_network(test_case):
         # soit la variable globale « net », soit une factory « create_network() »
         if hasattr(module, "net"):
             net = module.net
+            print("l36")
         elif hasattr(module, "create_network"):
             net = module.create_network()
+            print("l39")
         else:
+            print('l41')
             raise AttributeError(
                 f"{test_case} doit contenir une variable 'net' ou une fonction 'create_network()'"
             )
 
         if not isinstance(net, pp.pandapowerNet):
+            print("l47")
             raise TypeError("L’objet chargé n’est pas un pandapowerNet")
         return net
 
     raise ValueError(f"Format de fichier non pris en charge : {ext}")
+
+if __name__ == "__main__":
+    load_network("Networks/network_test.py")
