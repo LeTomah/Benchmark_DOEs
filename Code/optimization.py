@@ -195,14 +195,14 @@ def optim_problem(test_case,
     info_DSO = extract_info(res_full, children_set)
 
     # 6) sous-graphe opérationnel
-    op_graph = graph.subgraph_operational(full_graph, set(operational_nodes or full_graph.nodes()))
+    op_graph = graph.op_graph(full_graph, set(operational_nodes or full_graph.nodes()))
 
     # 7) restreint parents/enfants
     parents_op = list(set(parent_nodes or []) & set(op_graph.nodes()))
     children_op = list(set(children_nodes or []) & set(op_graph.nodes()))
 
     # 8) env sur le sous-graphe, avec info_DSO
-    env_op = pyo_environment.create_env(op_graph, parents_op, children_op, info_DSO=info_DSO)
+    env_op = pyo_environment.create_pyo_env(op_graph, parents_op, children_op, info_DSO=info_DSO)
 
     # 9) OPF sur sous-graphe
     res_op = run_opf(env_op)
