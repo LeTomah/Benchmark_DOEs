@@ -1,11 +1,11 @@
 import json
 import networkx as nx
 from typing import Dict, Any, Set
-from types import GraphBundle
+from app_types import GraphBundle
 
 def create_graph(net: Dict[str, Any]) -> GraphBundle:
     from loader import load_network
-    net = load_network(test_case)
+    net = load_network(net)
 
     # -------------------------
     # 1. Conversion du réseau Pandapower en DiGraph

@@ -1,12 +1,13 @@
 # pyo_environment.py
-from typing import Dict, Any, Set
+from typing import Dict, Any, Set, Optional
 import networkx as nx
-from types import EnvPyo
+from app_types import EnvPyo
 
-def create_env(graph,
+def create_pyo_env(graph,
                operational_nodes=None,
                parent_nodes=None,
-               children_nodes=None):
+               children_nodes=None,
+               info_DSO: Optional[Dict[int, float]] = None):
 
 #def create_pyo_environ(test_case, operational_nodes=None, parent_nodes=None, children_nodes=None):
     import graph

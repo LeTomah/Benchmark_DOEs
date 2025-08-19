@@ -1,17 +1,20 @@
-def optim_problem(test_case,
+import graph
+import pyo_environment
+import pyomo.environ as pyo
+import gurobipy as gp
+from loader import load_network
+def constraints(test_case,
                   operational_nodes=None,
                   parent_nodes=None,
-                  children_nodes=None):
-    import graph
-    import pyo_environment
-    import pyomo.environ as pyo
-    import gurobipy as gp
+                  children_nodes=None,
+                  opf_only=False):
+
 
     # Afficher les nœuds disponibles
     G_full = graph.create_graph(test_case)
 
     # --- Model creation with these choices ---
-    m = pyo_environment.create_pyo_environ(
+    m = pyo_environment.create_pyo_env(
         test_case,
         operational_nodes=operational_nodes,
         parent_nodes=parent_nodes,
@@ -25,19 +28,12 @@ def optim_problem(test_case,
     # -------------------------
 
     # Constant definition
-    V_min = 0
-    V_max = 100
-
-    I_min = -1
-    I_max = 1
-
-    P_min = -2
-    P_max = 2
-
-    theta_min = -180
-    theta_max = 180
-
-    alpha = 1000
+    V_min, V_max = 0, 100
+    I_min, I_max = -1, 1
+    P_min, P_max = -2, 2
+    theta_min, theta_max = -180, 180
+    alpha = 1
+    beta = 1
 
 #Consommation aux noeuds enfants
     info_DSO_node1 = m.F[1, 3, 0, 0].value
@@ -157,6 +153,66 @@ def optim_problem(test_case,
     def objective_rule(m):
         return sum(m.aux[n] for n in m.children) - alpha * m.O
     m.objective = pyo.Objective(rule=objective_rule, sense=pyo.maximize)
+
+def run_opf(env_tuple):
+    m, G = env_tuple
+    constraints(m, G)
+
+    solver = pyo.SolverFactory('gurobi')  # l’environnement Gurobi peut être ajouté si besoin
+    results = solver.solve(m, tee=False)
+
+    # extrait quelques résultats
+    flows = {(u, v): m.F[u, v, 0, 0].value for (u, v) in m.Lines}
+    status = str(results.solver.status)
+    obj = pyo.value(m.objective)
+    return {"status": status, "objective": obj, "flows": flows, "model": m, "graph": G}
+
+def extract_info(res_full, children):
+    m = res_full["model"]
+    # ici, un exemple simple : moyenne des deux sommets P_C_set
+    info = {}
+    for c in children:
+        val = 0.5 * (m.P_C_set[c, 0].value + m.P_C_set[c, 1].value) if (c in m.children) else 0.0
+        info[c] = float(val if val is not None else 0.0)
+    return info
+
+def optim_problem(test_case,
+                  operational_nodes=None,
+                  parent_nodes=None,
+                  children_nodes=None,
+                  opf_only=False):
+    # 1) charge le réseau
+    net_raw = load_network(test_case)
+
+    # 2) graphe complet
+    full_graph = graph.create_graph(net_raw)
+
+    # 3) env sur graphe complet
+    env_full = pyo_environment.create_pyo_env(full_graph, parent_nodes, children_nodes, info_DSO=None)
+
+    # 4) OPF complet
+    res_full = run_opf(env_full)
+    if opf_only:
+        return res_full
+
+    # 5) extrait info DSO aux enfants du FULL
+    children_set = set(children_nodes or [])
+    info_DSO = extract_info(res_full, children_set)
+
+    # 6) sous-graphe opérationnel
+    op_graph = graph.subgraph_operational(full_graph, set(operational_nodes or full_graph.nodes()))
+
+    # 7) restreint parents/enfants
+    parents_op = list(set(parent_nodes or []) & set(op_graph.nodes()))
+    children_op = list(set(children_nodes or []) & set(op_graph.nodes()))
+
+    # 8) env sur le sous-graphe, avec info_DSO
+    env_op = pyo_environment.create_env(op_graph, parents_op, children_op, info_DSO=info_DSO)
+
+    # 9) OPF sur sous-graphe
+    res_op = run_opf(env_op)
+
+    return {"full": res_full, "operational": res_op}
 
     # -------------------------
     # Résolution

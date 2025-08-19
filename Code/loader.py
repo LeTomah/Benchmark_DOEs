@@ -40,6 +40,6 @@ def load_network(test_case):
 
         if not isinstance(net, pp.pandapowerNet):
             raise TypeError("L’objet chargé n’est pas un pandapowerNet")
-        return net_raw
+        return net
 
     raise ValueError(f"Format de fichier non pris en charge : {ext}")
