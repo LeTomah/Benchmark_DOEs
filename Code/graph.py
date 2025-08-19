@@ -1,9 +1,11 @@
-def create_graph(test_case):
+import json
+import networkx as nx
+from typing import Dict, Any, Set
+from types import GraphBundle
+
+def create_graph(net: Dict[str, Any]) -> GraphBundle:
     from loader import load_network
     net = load_network(test_case)
-
-    import json
-    import networkx as nx
 
     # -------------------------
     # 1. Conversion du réseau Pandapower en DiGraph
@@ -100,6 +102,21 @@ def create_graph(test_case):
     print(B_base)
 
     # -------------------------
+    # Donner accès à G
+    # -------------------------
+    node_attrs = {n: G.nodes[n] for n in G.nodes}
+    return G
+
+
+# -------------------------
+# 5. Fonction d'affichage
+# -------------------------
+
+def plot_network(G, labels=None, node_colors=None):
+    import networkx as nx, matplotlib.pyplot as plt
+    pos = nx.get_node_attributes(G, 'pos')
+
+    # -------------------------
     # 3. Préparer les couleurs des nœuds en fonction de P
     # -------------------------
     node_colors = []
@@ -116,19 +133,6 @@ def create_graph(test_case):
     # -------------------------
     labels = {n: f"{data['label']}\nP={round(data['P'], 2)}MW"
               for n, data in G.nodes(data=True)}
-
-    # -------------------------
-    # Donner accès à G
-    # -------------------------
-    return G, labels, node_colors
-
-
-# -------------------------
-# 5. Fonction d'affichage
-# -------------------------
-def plot_network(G, labels=None, node_colors=None):
-    import networkx as nx, matplotlib.pyplot as plt
-    pos = nx.get_node_attributes(G, 'pos')
 
     plt.figure(figsize=(12, 8))
 
@@ -148,6 +152,12 @@ def plot_network(G, labels=None, node_colors=None):
     plt.axis("equal")
     plt.show()
 
+def op_graph(full_graph: nx.DiGraph, operational_nodes: Set[int]) -> nx.DiGraph:
+    """
+    Retourne le sous-graphe induit par 'operational_nodes'.
+    On filtre aussi les arêtes sortantes/entrantes.
+    """
+    return full_graph.subgraph(operational_nodes).copy()
 
 if __name__ == "__main__":
-    create_digraph("Networks/network_test.py")
+    create_graph("Networks/network_test.py")

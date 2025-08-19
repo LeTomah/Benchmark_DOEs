@@ -1,11 +1,18 @@
-def create_pyo_environ(test_case,
-                       operational_nodes=None,
-                       parent_nodes=None,
-                       children_nodes=None):
-    import digraph
+# pyo_environment.py
+from typing import Dict, Any, Set
+import networkx as nx
+from types import EnvPyo
+
+def create_env(graph,
+               operational_nodes=None,
+               parent_nodes=None,
+               children_nodes=None):
+
+#def create_pyo_environ(test_case, operational_nodes=None, parent_nodes=None, children_nodes=None):
+    import graph
     import pyomo.environ as pyo
     # Charger le graphe complet
-    G_full = digraph.create_digraph(test_case)
+    G_full = graph
     s_base = G_full.graph["s_base"]
 
     # Si l'utilisateur ne donne rien, on prend tous les nœuds
@@ -63,7 +70,7 @@ def create_pyo_environ(test_case,
             m.P[u] = - G.nodes[u]['P_pu']
 
     # Donner accès à m :
-    return m
+    return m, G
 
 if __name__ == "__main__":
     create_pyo_environ("Networks/network_test.py")

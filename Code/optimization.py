@@ -2,13 +2,13 @@ def optim_problem(test_case,
                   operational_nodes=None,
                   parent_nodes=None,
                   children_nodes=None):
-    import digraph
+    import graph
     import pyo_environment
     import pyomo.environ as pyo
     import gurobipy as gp
 
     # Afficher les nœuds disponibles
-    G_full = digraph.create_graph(test_case)
+    G_full = graph.create_graph(test_case)
 
     # --- Model creation with these choices ---
     m = pyo_environment.create_pyo_environ(
@@ -18,7 +18,7 @@ def optim_problem(test_case,
         children_nodes=children_nodes
     )
     G = G_full.subgraph(operational_nodes)
-    digraph.plot_network(G)
+    graph.plot_network(G)
 
     # -------------------------
     # Constraints

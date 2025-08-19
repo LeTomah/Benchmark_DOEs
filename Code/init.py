@@ -13,9 +13,10 @@ from optimization import optim_problem
 
 # ---- Paramétrage utilisateur ----
 TEST_CASE = "Networks/network_test.py"           # Chemin de votre fichier IEEE
-OPERATIONAL_NODES = [0,1,2,11,12]    # Nœuds conservés dans le sous-réseau
+OPERATIONAL_NODES = [0,1,2,11,12]   # Nœuds conservés dans le sous-réseau
 PARENT_NODES      = [0]             # Injectent la puissance (P_plus)
-CHILDREN_NODES    = [1,2]       # Absorbent la puissance (P_minus)
+CHILDREN_NODES    = [1,2]           # Absorbent la puissance (P_minus)
+OPF_ONLY          = False           # Choix du modèle d'optimisation
 # ---------------------------------
 
 install_missing_packages()      # requirements.txt auto-install
@@ -23,5 +24,6 @@ optim_problem(
     test_case=TEST_CASE,
     operational_nodes=OPERATIONAL_NODES,
     parent_nodes=PARENT_NODES,
-    children_nodes=CHILDREN_NODES
+    children_nodes=CHILDREN_NODES,
+    opf_only=OPF_ONLY
 )
