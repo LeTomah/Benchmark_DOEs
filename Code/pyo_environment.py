@@ -1,7 +1,7 @@
 # pyo_environment.py
 from typing import Dict, Any, Set, Optional
-import networkx as nx
 from app_types import EnvPyo
+import pyomo.environ as pyo
 
 def create_pyo_env(graph,
                operational_nodes=None,
@@ -10,8 +10,6 @@ def create_pyo_env(graph,
                info_DSO: Optional[Dict[int, float]] = None):
 
 #def create_pyo_environ(test_case, operational_nodes=None, parent_nodes=None, children_nodes=None):
-    import graph
-    import pyomo.environ as pyo
     # Charger le graphe complet
     G_full = graph
     s_base = G_full.graph["s_base"]
