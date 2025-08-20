@@ -11,7 +11,7 @@ def plot_power_flow(m, G, i, j):
         label_text = f"{n}"
         if n in m.parents:
             # Display parent bounds using the global P_min and P_max parameters
-            label_text += f"\n[{P_min}, {P_max}]"
+            label_text += f"\n[{m.P_min.value}, {m.P_max.value}]"
             # No specific color for label text here, use default
             label_colors.append('steelblue') # Default node color based on previous plots
         elif n in m.children:

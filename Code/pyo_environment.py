@@ -49,7 +49,11 @@ def create_pyo_env(graph,
     m.P_plus = pyo.Var(m.parents, m.i, m.j, domain=pyo.Reals)  # power entering the operational graph
     m.P_minus = pyo.Var(m.children, m.i, m.j, domain=pyo.Reals)  # power leaving the operational graph
     m.P_C_set = pyo.Var(m.children, m.i, domain=pyo.Reals)  # vertices of the power envelope at each child node
+
     m.aux = pyo.Var(m.children, domain=pyo.Reals)
+    m.tot = pyo.Var(domain= pyo.Reals)
+    m.O = pyo.Var(domain=pyo.NonNegativeReals)
+    m.diff_DSO = pyo.Var(m.children, domain=pyo.NonNegativeReals)
 
     #Paramètres du modèle
     info_DSO = info_DSO or {}
@@ -58,14 +62,24 @@ def create_pyo_env(graph,
         initialize={n: float(info_DSO.get(n, 0.0)) for n in m.children},
         domain=pyo.Reals
     )
-
-    m.I_min = pyo.Param(m.Lines, initialize={e: I_min for e in m.Lines}, domain=pyo.Reals)
-    m.I_max = pyo.Param(m.Lines, initialize={e: I_max for e in m.Lines}, domain=pyo.Reals)
-
+    # Constant definition
+    m.V_min = pyo.Param(initialize= 0.9)
+    m.V_max = pyo.Param(initialize= 1.1)
     m.V_P = pyo.Param(m.j, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
-    m.tot = pyo.Var(domain= pyo.Reals)
-    m.O = pyo.Var(domain=pyo.NonNegativeReals)
-    m.diff_DSO = pyo.Var(m.children, domain=pyo.NonNegativeReals)
+    m.I_min = pyo.Param(initialize=-1.0)
+    m.I_max = pyo.Param(initialize= 1.0)
+    m.P_min = pyo.Param(initialize=-2.0)
+    m.P_max = pyo.Param(initialize= 2.0)
+    m.theta_min = pyo.Param(initialize=-180.0)
+    m.theta_max = pyo.Param(initialize= 180.0)
+    m.alpha = pyo.Param(initialize=1)
+    m.beta = pyo.Param(initialize=1)
+
+    #Bornes par ligne
+    m.I_min = pyo.Param(m.Lines, initialize={e: m.I_min for e in m.Lines}, domain=pyo.Reals)
+    m.I_max = pyo.Param(m.Lines, initialize={e: m.I_max for e in m.Lines}, domain=pyo.Reals)
+
+
     # Calcul du per unit
     for u in G.nodes():
         if G.nodes[u].get('P', 0.0) / s_base == 0:

@@ -12,35 +12,12 @@ GUROBI_WLS_PARAMS = {
 }
 
 def _build_gurobi_solver():
-    import gurobipy as gp
-    import pyomo.environ as pyo
     env = gp.Env(params=GUROBI_WLS_PARAMS)
+    return env
     # important: passer l'env au SolverFactory
-    solver = pyo.SolverFactory("gurobi", solver_io="python", env=env)
-    return solver
+    # solver = pyo.SolverFactory("gurobi", solver_io="python", env=env)
 
 def constraints(m, G):
-
-    # Afficher les nœuds disponibles
-    # G_full = graph.create_graph(test_case)
-    #
-    # --- Model creation with these choices ---
-    # m = pyo_environment.create_pyo_env(
-    #     test_case,
-    #     operational_nodes=operational_nodes,
-    #     parent_nodes=parent_nodes,
-    #     children_nodes=children_nodes
-    # )
-    # G = G_full.subgraph(operational_nodes)
-    # graph.plot_network(G)
-
-    # Constant definition
-    V_min, V_max = 0, 100
-    I_min, I_max = -1, 1
-    P_min, P_max = -2, 2
-    theta_min, theta_max = -180, 180
-    alpha = 1
-    beta = 1
 
 #Consommation aux noeuds enfants
     # info_DSO_node1 = m.F[1, 3, 0, 0].value
@@ -82,16 +59,19 @@ def constraints(m, G):
     # Current magnitude constraint (I_min, I_max are assumed per-unit)
     def current_bounds_rule(m, u, v, vert_pow, vert_volt):
         # m.I is per-unit current
-        return pyo.inequality(I_min, m.I[u, v, vert_pow, vert_volt], I_max)
+        return pyo.inequality(m.I_min, m.I[u, v, vert_pow, vert_volt], m.I_max)
     m.CurrentBounds = pyo.Constraint(m.Lines, m.i, m.j, rule=current_bounds_rule)
 
     def phase_constr_rule(m, u, vert_pow, vert_volt):
-        return pyo.inequality(theta_min, m.theta[u, vert_pow, vert_volt], theta_max)
+        return pyo.inequality(m.theta_min, m.theta[u, vert_pow, vert_volt], m.theta_max)
     m.phaseConstr = pyo.Constraint(m.Nodes, m.i, m.j, rule=phase_constr_rule)
 
     def dc_power_flow_rule(m, u, v, vert_pow, vert_volt):
-        return m.F[u, v, vert_pow, vert_volt] == m.V_P[vert_volt] ** 2 * (G[u][v]['b_pu'] * (
-                m.theta[u, vert_pow, vert_volt] - m.theta[v, vert_pow, vert_volt]))
+        if G[u][v]['b_pu']==None:
+            return pyo.constraint.skip
+        else:
+            return m.F[u, v, vert_pow, vert_volt] == m.V_P[vert_volt] ** 2 * (G[u][v]['b_pu'] * (
+                    m.theta[u, vert_pow, vert_volt] - m.theta[v, vert_pow, vert_volt]))
     m.DCFlow = pyo.Constraint(m.Lines, m.i, m.j, rule=dc_power_flow_rule)
 
     def current_def_rule(m, u, v, vert_pow, vert_volt):
@@ -115,12 +95,12 @@ def constraints(m, G):
 
     def parent_power_constraint_rule(m, parent, vert_pow, vert_volt):
         # m.P_plus is per-unit power entering the operational graph
-        return pyo.inequality(P_min, m.P_plus[parent, vert_pow, vert_volt], P_max)
+        return pyo.inequality(m.P_min, m.P_plus[parent, vert_pow, vert_volt], m.P_max)
     m.parent_power_constraint = pyo.Constraint(m.parents, m.i, m.j, rule=parent_power_constraint_rule)
 
     def parent_power_constraint_rule2(m, parent, vert_pow, vert_volt):
         # m.P_plus is per-unit power entering the operational graph
-        return pyo.inequality(P_min, m.P_minus[parent, vert_pow, vert_volt], P_max)
+        return pyo.inequality(m.P_min, m.P_minus[parent, vert_pow, vert_volt], m.P_max)
     m.parent_power_constraint2 = pyo.Constraint(m.children, m.i, m.j, rule=parent_power_constraint_rule2)
 
     # Constant voltage assumption
@@ -129,7 +109,7 @@ def constraints(m, G):
     m.voltageConstr = pyo.Constraint(m.Nodes, m.i, m.j, rule=voltage_constr_rule)
 
     def children_voltage_rule(m, children, vert_pow, vert_volt):
-        return pyo.inequality(V_min, m.V[children, vert_pow, vert_volt], V_max)
+        return pyo.inequality(m.V_min, m.V[children, vert_pow, vert_volt], m.V_max)
     m.children_voltage = pyo.Constraint(m.children, m.i, m.j, rule=children_voltage_rule)
 
     def aux_constraint_rule(m, u):
@@ -157,10 +137,10 @@ def constraints(m, G):
     # Objectif
     # -------------------------
     # Define alpha as a parameter of the model
-    m.alpha = pyo.Param(initialize=1)
+
 
     def objective_rule(m):
-        return m.tot - alpha * m.O - beta * m.tot_bis
+        return m.tot - m.alpha * m.O - m.beta * m.tot_bis
     m.objective = pyo.Objective(rule=objective_rule, sense=pyo.maximize)
 
 def run_opf(env_tuple):
@@ -197,7 +177,10 @@ def optim_problem(test_case,
     full_graph = graph.create_graph(net)
 
     # 3) env sur graphe complet
-    env_full = pyo_environment.create_pyo_env(full_graph, parent_nodes, children_nodes, info_DSO=None)
+    env_full = pyo_environment.create_pyo_env(graph=full_graph,
+                                              parent_nodes=None,
+                                              children_nodes=children_nodes,
+                                              info_DSO=None)
 
     # 4) OPF complet
     res_full = run_opf(env_full)
@@ -216,7 +199,11 @@ def optim_problem(test_case,
     children_op = list(set(children_nodes or []) & set(op_graph.nodes()))
 
     # 8) env sur le sous-graphe, avec info_DSO
-    env_op = pyo_environment.create_pyo_env(op_graph, parents_op, children_op, info_DSO=info_DSO)
+    env_op = pyo_environment.create_pyo_env(graph=op_graph,
+                                            operational_nodes=list(op_graph.nodes()),
+                                            parent_nodes=parents_op,
+                                            children_nodes=children_op,
+                                            info_DSO=info_DSO)
 
     # 9) OPF sur sous-graphe
     res_op = run_opf(env_op)
