@@ -36,7 +36,8 @@ def create_graph(net: Any) -> nx.Graph:
                    type="line",
                    name=row["name"],
                    length=row["length_km"],
-                   std_type=row["std_type"])
+                   std_type=row["std_type"],
+                   x_ohm=row["x_ohm_per_km"],)
 
     # Ajouter les arêtes pour les transformateurs
     for _, row in net.trafo.iterrows():
@@ -81,19 +82,13 @@ def create_graph(net: Any) -> nx.Graph:
     for n in G.nodes:
         G.nodes[n]["P"] = G.nodes[n]["P_gen"] - G.nodes[n]["P_load"]
 
+    print(net.line.columns)
+
     # Calculate the susceptance of each line in Siemens
     for u, v, data in G.edges(data=True):
-        if "length" in data:  # Vérifie que l'arête a bien une longueur
-            L = data["length"]  # Récupère la longueur en km
-            G[u][v]['b'] = L * 200*10**-6  # Calcule et stocke 'b'
-
-    # Convert susceptance 'b' on edges to per-unit
-    for u, v in G.edges():
-        """Assuming 'b' is in Siemens/km, convert to per-unit
-        b_pu = b_actual * (V_base^2 / S_base)
-        V_base is assumed to be v_base_high (110 kV)"""
-        G[u][v]['b_pu'] = G[u][v].get('b', 0.0) * (G.graph["v_base"]**2 / (G.graph["s_base"]))
-        print(f"Ligne {u}->{v}: b_pu = {G[u][v]['b_pu']} pu")
+        if 'x_ohm' in data and data['x_ohm'] > 0:
+            data['b_pu'] = (G.nodes[u]["vn_kv"]**2 / (data['x_ohm'] * G.graph["s_base"]))  # Calcule et stocke B_ij per unit
+            print(f"Ligne {u}->{v}: b_pu = {G[u][v]['b_pu']} pu")
 
     B_base = G.graph["s_base"]/(G.graph["v_base"]**2)
     print("B_base: ", B_base)

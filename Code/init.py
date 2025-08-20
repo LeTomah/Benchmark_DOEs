@@ -11,8 +11,10 @@ puis de lancer :  init.py
 from check_requirements import install_missing_packages
 from optimization import optim_problem
 from plot_utils import plot_power_flow
+import pandapower.networks as pn
+
 # ---- Paramétrage utilisateur ----
-TEST_CASE = "Networks/network_test.py"           # Chemin de votre fichier IEEE
+TEST_CASE = pn.case14()           # Chemin de votre fichier IEEE
 OPERATIONAL_NODES = [0,1,2,11,12]   # Nœuds conservés dans le sous-réseau
 PARENT_NODES      = [0]             # Injectent la puissance (P_plus)
 CHILDREN_NODES    = [1,2]           # Absorbent la puissance (P_minus)
@@ -26,5 +28,6 @@ res = optim_problem(
     parent_nodes=PARENT_NODES,
     children_nodes=CHILDREN_NODES,
     opf_only=OPF_ONLY)          # run the optimization
+
 plot_power_flow(res["full"]["model"], res["full"]["graph"], 0, 1)
 plot_power_flow(res["operational"]["model"], res["operational"]["graph"], 0, 1)

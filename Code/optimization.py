@@ -160,7 +160,7 @@ def constraints(m, G):
     m.alpha = pyo.Param(initialize=1)
 
     def objective_rule(m):
-        return sum(m.aux[n] for n in m.children) - alpha * m.O
+        return m.tot - alpha * m.O - beta * m.tot_bis
     m.objective = pyo.Objective(rule=objective_rule, sense=pyo.maximize)
 
 def run_opf(env_tuple):
@@ -191,10 +191,10 @@ def optim_problem(test_case,
                   children_nodes=None,
                   opf_only=False):
     # 1) charge le réseau
-    net_raw = load_network(test_case)
+    net = load_network(test_case)
 
     # 2) graphe complet
-    full_graph = graph.create_graph(net_raw)
+    full_graph = graph.create_graph(net)
 
     # 3) env sur graphe complet
     env_full = pyo_environment.create_pyo_env(full_graph, parent_nodes, children_nodes, info_DSO=None)

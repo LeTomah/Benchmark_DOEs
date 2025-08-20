@@ -59,7 +59,6 @@ def create_pyo_env(graph,
         domain=pyo.Reals
     )
 
-
     m.I_min = pyo.Param(m.Lines, initialize={e: I_min for e in m.Lines}, domain=pyo.Reals)
     m.I_max = pyo.Param(m.Lines, initialize={e: I_max for e in m.Lines}, domain=pyo.Reals)
 
