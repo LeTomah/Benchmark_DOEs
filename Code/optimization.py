@@ -58,7 +58,7 @@ def constraints(m, G):
     # Current magnitude constraint (I_min, I_max are assumed per-unit)
     def current_bounds_rule(m, u, v, vert_pow, vert_volt):
         # m.I is per-unit current
-        return pyo.inequality(m.I_min, m.I[u, v, vert_pow, vert_volt], m.I_max)
+        return pyo.inequality(m.I_min[u, v], m.I[u, v, vert_pow, vert_volt], m.I_max[u, v])
     m.CurrentBounds = pyo.Constraint(m.Lines, m.i, m.j, rule=current_bounds_rule)
 
     def phase_constr_rule(m, u, vert_pow, vert_volt):

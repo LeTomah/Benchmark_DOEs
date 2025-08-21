@@ -22,9 +22,6 @@ def create_graph(net: Any) -> nx.Graph:
                 continue
             except (json.JSONDecodeError, KeyError, TypeError):
                 pass
-        # Fallback si aucune donnée géographique n'est fournie :
-        # on positionne le nœud artificiellement sur une ligne verticale
-        pos[idx] = (0.0, float(idx))
 
     G.graph["s_base"] = 100 #MVA
 
