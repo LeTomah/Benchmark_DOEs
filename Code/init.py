@@ -15,9 +15,9 @@ import pandapower.networks as pn
 
 # ---- Paramétrage utilisateur ----
 TEST_CASE = pn.case14()           # Chemin de votre fichier IEEE
-OPERATIONAL_NODES = [0,1,2,11,12]   # Nœuds conservés dans le sous-réseau
-PARENT_NODES      = [0]             # Injectent la puissance (P_plus)
-CHILDREN_NODES    = [1,2]           # Absorbent la puissance (P_minus)
+OPERATIONAL_NODES = [4, 5, 9, 10, 11, 12]   # Nœuds conservés dans le sous-réseau
+PARENT_NODES      = [4]             # Injectent la puissance (P_plus)
+CHILDREN_NODES    = [9, 10, 11, 12]           # Absorbent la puissance (P_minus)
 OPF_ONLY          = False           # Choix du modèle d'optimisation
 # ---------------------------------
 

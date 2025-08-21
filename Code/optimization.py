@@ -13,7 +13,7 @@ GUROBI_WLS_PARAMS = {
 
 def _build_gurobi_solver():
     env = gp.Env(params=GUROBI_WLS_PARAMS)
-    return env
+    return pyo.SolverFactory('gurobi', env= env)
     # important: passer l'env au SolverFactory
     # solver = pyo.SolverFactory("gurobi", solver_io="python", env=env)
 
@@ -30,7 +30,6 @@ def constraints(m, G):
     # Children nodes consumption
     def worst_case_children(m, u, vert_pow, vert_volt):
         return m.P_C_set[u, vert_pow] == m.P_minus[u, vert_pow, vert_volt]
-
     m.worst_case = pyo.Constraint(m.children, m.i, m.j, rule=worst_case_children)
 
     # Auxiliary variable for the absolute value of E (already defined as per-unit)
@@ -68,7 +67,7 @@ def constraints(m, G):
 
     def dc_power_flow_rule(m, u, v, vert_pow, vert_volt):
         if G[u][v]['b_pu']==None:
-            return pyo.constraint.skip
+            return pyo.Constraint.Skip
         else:
             return m.F[u, v, vert_pow, vert_volt] == m.V_P[vert_volt] ** 2 * (G[u][v]['b_pu'] * (
                     m.theta[u, vert_pow, vert_volt] - m.theta[v, vert_pow, vert_volt]))
@@ -78,7 +77,7 @@ def constraints(m, G):
         # This constraint relates per-unit current, per-unit voltage, and per-unit power flow.
         # In per-unit, P_pu = V_pu * I_pu. This is correct.
         return m.I[u, v, vert_pow, vert_volt] * m.V_P[vert_volt] == m.F[u, v, vert_pow, vert_volt]
-    m.current_def = pyo.Constraint(m.Nodes, m.Lines, m.i, m.j, rule=current_def_rule)
+    m.current_def = pyo.Constraint(m.Lines, m.i, m.j, rule=current_def_rule)
 
     def power_balance_rule(m, n, vert_pow, vert_volt):
         # Compute net flow into node n by summing over all lines (i,j) in m.Lines

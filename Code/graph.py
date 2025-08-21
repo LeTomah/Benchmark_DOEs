@@ -1,6 +1,7 @@
 import json
 import networkx as nx
 from typing import Dict, Any, Set
+import math
 from app_types import GraphBundle
 
 def create_graph(net: Any) -> nx.Graph:
@@ -19,9 +20,7 @@ def create_graph(net: Any) -> nx.Graph:
         coordinates = geo_dict["coordinates"]
         pos[idx] = tuple(coordinates)
 
-    #Ajouter une puissance de base
-    G.graph["s_base"] = 100.0 # MVA
-    G.graph["v_base"] = 110.0 # kV
+    G.graph["s_base"] = 100 #MVA
 
     # Ajouter les nœuds
     for idx, row in net.bus.iterrows():
@@ -33,17 +32,30 @@ def create_graph(net: Any) -> nx.Graph:
     # Ajouter les arêtes pour les lignes
     for _, row in net.line.iterrows():
         G.add_edge(row["from_bus"], row["to_bus"],
-                   type="line",
-                   name=row["name"],
-                   length=row["length_km"],
-                   std_type=row["std_type"],
-                   x_ohm=row["x_ohm_per_km"],)
+                   type = "line",
+                   name = row["name"],
+                   length = row["length_km"],
+                   std_type = row["std_type"],
+                   x_ohm = row["x_ohm_per_km"]*row["length_km"])
+        u, v = row["from_bus"], row["to_bus"]
+        V_kv = G.nodes[u]["vn_kv"]
+        G[u][v]["b_pu"] = (V_kv ** 2) / (G[u][v]["x_ohm"] * G.graph["s_base"])
 
     # Ajouter les arêtes pour les transformateurs
     for _, row in net.trafo.iterrows():
         G.add_edge(row["hv_bus"], row["lv_bus"],
                    type="trafo",
-                   name=row["name"])
+                   name=row["name"],
+                   std_type = None,
+                   b_pu = None)
+        u, v = row["hv_bus"], row["lv_bus"]
+        G[u][v]["b_pu"] = None
+
+    for u, v, data in G.edges(data=True):
+        if 'x_ohm' in data and data['x_ohm'] > 0:
+            # G[u][v]['b_pu'] = (G.nodes[u]["vn_kv"]**2 / (data['x_ohm'] * G.nodes["s_base"]))  # Calcule et stocke B_ij per unit
+            print(f"Ligne {u}->{v}: b_pu = {G[u][v]['b_pu']} pu")
+
 
     # Ajouter les générateurs et les charges comme attributs aux nœuds
     for _, row in net.gen.iterrows():
@@ -63,8 +75,8 @@ def create_graph(net: Any) -> nx.Graph:
     # -------------------------
     # 2. Ajout des puissances consommées et injectées aux nœuds
     # -------------------------
-    nx.set_node_attributes(G, 0.0, "P_load")
-    nx.set_node_attributes(G, 0.0, "P_gen")
+    nx.set_node_attributes(G, 0.0, 'P_load')
+    nx.set_node_attributes(G, 0.0, 'P_gen')
 
     # Charges
     for _, row in net.load.iterrows():
@@ -84,14 +96,7 @@ def create_graph(net: Any) -> nx.Graph:
 
     print(net.line.columns)
 
-    # Calculate the susceptance of each line in Siemens
-    for u, v, data in G.edges(data=True):
-        if 'x_ohm' in data and data['x_ohm'] > 0:
-            data['b_pu'] = (G.nodes[u]["vn_kv"]**2 / (data['x_ohm'] * G.graph["s_base"]))  # Calcule et stocke B_ij per unit
-            print(f"Ligne {u}->{v}: b_pu = {G[u][v]['b_pu']} pu")
 
-    B_base = G.graph["s_base"]/(G.graph["v_base"]**2)
-    print("B_base: ", B_base)
 
     # -------------------------
     # Donner accès à G
@@ -99,7 +104,46 @@ def create_graph(net: Any) -> nx.Graph:
     node_attrs = {n: G.nodes[n] for n in G.nodes}
     return G
 
+#Calcul des valeurs max de courant dans chaque ligne
+def calculate_current_bounds(G, line_type, v_base):
+    """
+    Calculates the upper and lower bounds for current in per-unit
+    based on the line type's maximum current capacity.
 
+    Args:
+        line_type (str): The type of the transmission line.
+        i_base_kA (float): The base current in kA for the system.
+
+    Returns:
+        tuple: A tuple containing (I_min_pu, I_max_pu).
+               Returns (None, None) if the line type is not found.
+    """
+    # Define a dictionary mapping line types to their maximum current capacity in kA
+    # NOTE: This is a placeholder. You should populate this dictionary
+    # with the actual maximum current capacities for your line types.
+    i_base_kA = G.graph["s_base"] / (math.sqrt(3) * v_base)  # kA
+
+    line_type_max_current_kA = {
+        '149-AL1/24-ST1A 110.0': 0.47,  # Example value for 110 kV lines
+        'NA2XS2Y 1x185 RM/25 12/20 kV': 0.3,  # Example value for 20 kV lines
+        '94-AL1/15-ST1A 0.4': 0.15  # Example value for 0.4 kV lines
+    }
+
+    if line_type in line_type_max_current_kA:
+        I_max_kA = line_type_max_current_kA[line_type]
+
+        # Calculate the upper bound for current in per-unit
+        I_max = I_max_kA / i_base_kA
+
+        # The lower bound for current is the negative of the upper bound
+        I_min = -I_max
+
+        return I_min, I_max, i_base_kA
+
+    elif line_type == None:
+        return -1000, 1000
+    else:
+        return None, None
 # -------------------------
 # 5. Fonction d'affichage
 # -------------------------

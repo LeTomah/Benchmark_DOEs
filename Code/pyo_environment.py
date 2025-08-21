@@ -1,8 +1,8 @@
 # pyo_environment.py
 from typing import Dict, Any, Set, Optional
-
 from app_types import EnvPyo
 import pyomo.environ as pyo
+from graph import calculate_current_bounds
 
 def create_pyo_env(graph,
                operational_nodes=None,
@@ -13,7 +13,7 @@ def create_pyo_env(graph,
 #def create_pyo_environ(test_case, operational_nodes=None, parent_nodes=None, children_nodes=None):
     # Charger le graphe complet
     G_full = graph
-    s_base = G_full.graph["s_base"]
+    #s_base = G_full.graph["s_base"]
 
     # Si l'utilisateur ne donne rien, on prend tous les nœuds
     if operational_nodes is None:
@@ -66,30 +66,36 @@ def create_pyo_env(graph,
     m.V_min = pyo.Param(initialize= 0.9)
     m.V_max = pyo.Param(initialize= 1.1)
     m.V_P = pyo.Param(m.j, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
-    m.I_min = pyo.Param(initialize=-1.0)
-    m.I_max = pyo.Param(initialize= 1.0)
     m.P_min = pyo.Param(initialize=-2.0)
     m.P_max = pyo.Param(initialize= 2.0)
     m.theta_min = pyo.Param(initialize=-180.0)
     m.theta_max = pyo.Param(initialize= 180.0)
     m.alpha = pyo.Param(initialize=1)
     m.beta = pyo.Param(initialize=1)
-
-    #Bornes par ligne
-    m.I_min = pyo.Param(m.Lines, initialize={e: m.I_min for e in m.Lines}, domain=pyo.Reals)
-    m.I_max = pyo.Param(m.Lines, initialize={e: m.I_max for e in m.Lines}, domain=pyo.Reals)
+    m.I_min = pyo.Param(m.Lines,
+                        initialize={ (u, v): calculate_current_bounds(
+                            G,
+                            G[u][v]["std_type"],
+                            G.nodes[u]['vn_kv'])[0] for (u, v) in m.Lines},
+                        domain=pyo.Reals)
+    m.I_max = pyo.Param(m.Lines,
+                        initialize={ (u, v): calculate_current_bounds(
+                            G,
+                            G[u][v]["std_type"],
+                            G.nodes[u]['vn_kv'])[1] for (u, v) in m.Lines},
+                        domain=pyo.Reals)
 
 
     # Calcul du per unit
     for u in G.nodes():
-        if G.nodes[u].get('P', 0.0) / s_base == 0:
+        if G.nodes[u].get('P', 0.0) / G_full.graph["s_base"] == 0:
             m.P[u] = 0
         else:
-            G.nodes[u]['P_pu'] = G.nodes[u].get('P', 0.0) / s_base
+            G.nodes[u]['P_pu'] = G.nodes[u].get('P', 0.0) / G_full.graph["s_base"]
             m.P[u] = - G.nodes[u]['P_pu']
 
     # Donner accès à m :
     return m, G
 
 if __name__ == "__main__":
-    create_pyo_environ("Networks/network_test.py")
+    create_pyo_env("Networks/network_test.py")
