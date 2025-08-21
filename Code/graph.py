@@ -1,36 +1,30 @@
-import json
-import networkx as nx
-from typing import Dict, Any, Set
 import math
-from app_types import GraphBundle
+import networkx as nx
+from typing import Any, Set
+from bus_positions import extract_bus_positions
 
 def create_graph(net: Any) -> nx.Graph:
-    # -------------------------
-    # 1. Conversion du réseau Pandapower en DiGraph
-    # -------------------------
+    """Create a NetworkX graph from a pandapower network.
+
+    Parameters
+    ----------
+    net : Any
+        ``pandapowerNet`` instance providing buses, lines and transformers.
+    """
     G = nx.Graph()
 
-    # 2. Récupération des positions à partir de la colonne 'geo'
-    pos = {}
-    for idx, row in net.bus.iterrows():
-        geo_data = row["geo"]
-        if isinstance(geo_data, str):
-            try:
-                geo_dict = json.loads(geo_data)
-                coordinates = geo_dict["coordinates"]
-                pos[idx] = tuple(coordinates)
-                continue
-            except (json.JSONDecodeError, KeyError, TypeError):
-                pass
+    pos = extract_bus_positions(net)
 
-    G.graph["s_base"] = 100 #MVA
+    G.graph["s_base"] = 100  # MVA
 
     # Ajouter les nœuds
     for idx, row in net.bus.iterrows():
-        G.add_node(idx,
-                   label=row["name"],
-                   pos=pos[idx],
-                   vn_kv=row["vn_kv"])
+        G.add_node(
+            idx,
+            label=row["name"],
+            pos=pos[idx],
+            vn_kv=row["vn_kv"],
+        )
 
     # Ajouter les arêtes pour les lignes
     for _, row in net.line.iterrows():
@@ -57,8 +51,6 @@ def create_graph(net: Any) -> nx.Graph:
                    b_pu = None)
         u, v = row["hv_bus"], row["lv_bus"]
         G[u][v]["b_pu"] = None
-
-
 
     # Ajouter les générateurs, sgens et les charges comme attributs aux nœuds
     for _, row in net.gen.iterrows():
@@ -182,11 +174,15 @@ def plot_network(G, labels=None, node_colors=None):
     plt.show()
 
 def op_graph(full_graph: nx.DiGraph, operational_nodes: Set[int]) -> nx.DiGraph:
-    """
-    Retourne le sous-graphe induit par 'operational_nodes'.
-    On filtre aussi les arêtes sortantes/entrantes.
-    """
+    """Return the subgraph induced by ``operational_nodes``."""
     return full_graph.subgraph(operational_nodes).copy()
 
 if __name__ == "__main__":
-    create_graph("Networks/network_test.py")
+    # Petit test manuel pour vérifier l'extraction des positions
+    import pandapower.networks as pn
+
+    net = pn.example_multivoltage()
+    G = create_graph(net)
+    pos = nx.get_node_attributes(G, "pos")
+    assert len(pos) == len(G.nodes), "Toutes les positions de bus doivent être présentes."
+    print(f"Graph created with {len(G.nodes)} buses; all positions available.")
