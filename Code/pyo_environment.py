@@ -29,7 +29,17 @@ def create_pyo_environ(test_case,
     m.children = pyo.Set(initialize=[1, 2])
     m.parents = pyo.Set(initialize=[0])
 
-    m.P = pyo.Param(m.Nodes, initialize={n: - G.nodes[n].get('P') for n in G.nodes}, domain=pyo.Reals, mutable=True)
+    # Net power at each node is stored in the ``P_net`` attribute of the
+    # NetworkX graph.  Some nodes might not have this attribute explicitly
+    # defined, so ``get`` is used with a default value of ``0.0`` to avoid
+    # returning ``None`` which cannot be negated.  ``m.P`` represents the
+    # opposite of this net power (positive for loads, negative for generation).
+    m.P = pyo.Param(
+        m.Nodes,
+        initialize={n: -G.nodes[n].get('P_net', 0.0) for n in G.nodes},
+        domain=pyo.Reals,
+        mutable=True,
+    )
 
     # --- Définir parents/enfants dynamiquement ---
     if parent_nodes is None:
@@ -61,8 +71,7 @@ def create_pyo_environ(test_case,
     I_min = pyo.Param(initialize=0.8)
     I_max = pyo.Param(initialize=1.2)
 
-    m.V_P = pyo.Param(m.j, default=1, domain=pyo.NonNegativeReals)
-    m.P = pyo.Param(m.Nodes, default=1, domain=pyo.Reals)
+
 
     def get_node_voltage_kv(node_index):
         """
