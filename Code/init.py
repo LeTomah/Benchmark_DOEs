@@ -14,7 +14,7 @@ from plot_utils import plot_power_flow
 import pandapower.networks as pn
 
 # ---- Paramétrage utilisateur ----
-TEST_CASE = pn.case14()           # Chemin de votre fichier IEEE
+TEST_CASE = pn.example_multivoltage()           # Chemin de votre fichier IEEE
 OPERATIONAL_NODES = [4, 5, 9, 10, 11, 12]   # Nœuds conservés dans le sous-réseau
 PARENT_NODES      = [4]             # Injectent la puissance (P_plus)
 CHILDREN_NODES    = [9, 10, 11, 12]           # Absorbent la puissance (P_minus)
