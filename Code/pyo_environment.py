@@ -72,18 +72,30 @@ def create_pyo_env(graph,
     m.theta_max = pyo.Param(initialize= 180.0)
     m.alpha = pyo.Param(initialize=1)
     m.beta = pyo.Param(initialize=1)
-    m.I_min = pyo.Param(m.Lines,
-                        initialize={ (u, v): calculate_current_bounds(
-                            G,
-                            G[u][v]["std_type"],
-                            G.nodes[u]['vn_kv'])[0] for (u, v) in m.Lines},
-                        domain=pyo.Reals)
-    m.I_max = pyo.Param(m.Lines,
-                        initialize={ (u, v): calculate_current_bounds(
-                            G,
-                            G[u][v]["std_type"],
-                            G.nodes[u]['vn_kv'])[1] for (u, v) in m.Lines},
-                        domain=pyo.Reals)
+    m.I_min = pyo.Param(
+        m.Lines,
+        initialize={
+            (u, v): calculate_current_bounds(
+                G,
+                G[u][v].get("max_i_ka"),
+                G.nodes[u]["vn_kv"],
+            )[0]
+            for (u, v) in m.Lines
+        },
+        domain=pyo.Reals,
+    )
+    m.I_max = pyo.Param(
+        m.Lines,
+        initialize={
+            (u, v): calculate_current_bounds(
+                G,
+                G[u][v].get("max_i_ka"),
+                G.nodes[u]["vn_kv"],
+            )[1]
+            for (u, v) in m.Lines
+        },
+        domain=pyo.Reals,
+    )
 
 
     # Calcul du per unit
