@@ -3,10 +3,11 @@ from __future__ import annotations
 """Utility functions for plotting electrical networks."""
 
 from pathlib import Path
-from typing import Dict, Hashable, Optional, Tuple
+from typing import Dict, Hashable, Iterable, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
+from matplotlib.patches import Patch
 
 Pos = Dict[Hashable, Tuple[float, float]]
 
@@ -43,15 +44,62 @@ def get_or_compute_pos(G: nx.Graph, layout: str = "spring") -> Pos:
             "planar": nx.planar_layout,
         }
         layout_func = layout_funcs.get(layout, nx.spring_layout)
+        layout_kwargs = {}
+        if pos:
+            layout_kwargs = {"pos": pos, "fixed": list(pos)}
         try:
-            pos = layout_func(G)
+            pos_computed = layout_func(G, **layout_kwargs)
         except Exception:
-            pos = nx.spring_layout(G)
+            pos_computed = nx.spring_layout(G, **layout_kwargs)
+        pos = {**pos, **pos_computed}
 
     if len(pos) != G.number_of_nodes():
         missing = set(G.nodes()) - set(pos)
         raise ValueError(f"Positions missing for nodes: {missing}")
     return pos
+
+
+def classify_nodes(G: nx.Graph) -> Dict[str, Iterable[Hashable]]:
+    """Classify nodes into producers and consumers.
+
+    Rules of precedence:
+
+    1. ``is_generator`` is ``True`` -> producer
+    2. ``type`` in {"gen", "generator", "slack"} -> producer
+    3. ``p_mw`` > 0 -> producer ; ``p_mw`` < 0 -> consumer
+    4. default -> consumer
+
+    Parameters
+    ----------
+    G : nx.Graph
+        Graph whose nodes are to be classified.
+
+    Returns
+    -------
+    dict
+        ``{"producers": [...], "consumers": [...]}``
+    """
+
+    producers = []
+    consumers = []
+    for n, data in G.nodes(data=True):
+        if data.get("is_generator") is True:
+            producers.append(n)
+            continue
+        if data.get("type") in {"gen", "generator", "slack"}:
+            producers.append(n)
+            continue
+        p_mw = data.get("p_mw")
+        if isinstance(p_mw, (int, float)):
+            if p_mw > 0:
+                producers.append(n)
+                continue
+            if p_mw < 0:
+                consumers.append(n)
+                continue
+        consumers.append(n)
+
+    return {"producers": producers, "consumers": consumers}
 
 
 def draw_network(
@@ -63,7 +111,10 @@ def draw_network(
     with_labels: bool = True,
     label_attr: str = "label",
 ) -> plt.Axes:
-    """Draw ``G`` with visible edges and node labels.
+    """Draw ``G`` with visible edges and colour‑coded nodes.
+
+    Producers are drawn in green and consumers in red. Edges are placed
+    behind nodes and remain visible even for multi-graphs.
 
     Parameters
     ----------
@@ -92,19 +143,28 @@ def draw_network(
     if pos is None or set(pos) != set(G.nodes()):
         pos = get_or_compute_pos(G)
 
+    zero_len = [
+        (u, v)
+        for u, v in G.edges()
+        if tuple(pos.get(u)) == tuple(pos.get(v))
+    ]
+    if zero_len:
+        print("⚠️ Edges with zero geometric length:", zero_len[:10])
+
     ax = plt.gca()
 
     arrows = G.is_directed()
 
-    edge_kwargs = dict(width=edge_width, alpha=edge_alpha, arrows=arrows)
+    edge_kwargs = dict(width=edge_width, alpha=edge_alpha, ax=ax)
+    if G.is_multigraph():
+        edge_kwargs["edgelist"] = list(G.edges(keys=True))
+        edge_kwargs["connectionstyle"] = "arc3,rad=0.15"
     if arrows:
-        edge_kwargs.update(arrowstyle="-|>", arrowsize=10)
-    edge_collection = nx.draw_networkx_edges(
-        G,
-        pos,
-        ax=ax,
-        **edge_kwargs,
-    )
+        edge_kwargs.update(arrows=True, arrowstyle="-|>", arrowsize=10)
+    else:
+        edge_kwargs["arrows"] = False
+
+    edge_collection = nx.draw_networkx_edges(G, pos, **edge_kwargs)
     if edge_collection is not None:
         if isinstance(edge_collection, list):
             for collection in edge_collection:
@@ -112,18 +172,45 @@ def draw_network(
         else:
             edge_collection.set_zorder(1)
 
-    node_collection = nx.draw_networkx_nodes(
-        G,
-        pos,
-        node_size=node_size,
-        ax=ax,
-    )
-    if node_collection is not None:
-        node_collection.set_zorder(2)
+    groups = classify_nodes(G)
+    producers = groups["producers"]
+    consumers = groups["consumers"]
+
+    if producers:
+        p_nodes = nx.draw_networkx_nodes(
+            G,
+            pos,
+            nodelist=producers,
+            node_color="green",
+            node_size=node_size,
+            ax=ax,
+        )
+        if p_nodes is not None:
+            p_nodes.set_zorder(2)
+
+    if consumers:
+        c_nodes = nx.draw_networkx_nodes(
+            G,
+            pos,
+            nodelist=consumers,
+            node_color="red",
+            node_size=node_size,
+            ax=ax,
+        )
+        if c_nodes is not None:
+            c_nodes.set_zorder(2)
 
     if with_labels:
         labels = {n: G.nodes[n].get(label_attr, n) for n in G.nodes}
         nx.draw_networkx_labels(G, pos, labels=labels, font_size=8, ax=ax)
+
+    handles = []
+    if producers:
+        handles.append(Patch(color="green", label="Producer"))
+    if consumers:
+        handles.append(Patch(color="red", label="Consumer"))
+    if handles:
+        ax.legend(handles=handles)
 
     ax.set_axis_off()
     ax.figure.tight_layout()
