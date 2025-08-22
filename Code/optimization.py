@@ -4,18 +4,15 @@ import pyomo.environ as pyo
 import gurobipy as gp
 from loader import load_network
 
-# --- Gurobi WLS (à adapter si tu utilises un .env) ---
-GUROBI_WLS_PARAMS = {
-    "WLSACCESSID": "295bde64-ffb2-46ce-92c9-af4e12ace58f",
-    "WLSSECRET":   "2dc9e249-7d48-4e46-a099-71c52d5d7247",
-    "LICENSEID":   2689995,
-}
+# Retrieve Gurobi credentials from environment variables instead of
+# hardcoding them in the source code. See ``gurobi_config`` for
+# details on the expected variables.
+from gurobi_config import get_wls_params
 
 def _build_gurobi_solver():
-    env = gp.Env(params=GUROBI_WLS_PARAMS)
-    return pyo.SolverFactory('gurobi', env= env)
-    # important: passer l'env au SolverFactory
-    # solver = pyo.SolverFactory("gurobi", solver_io="python", env=env)
+    """Create a Gurobi solver with credentials from the environment."""
+    env = gp.Env(params=get_wls_params())
+    return pyo.SolverFactory('gurobi', env=env)
 
 def constraints(m, G):
 
