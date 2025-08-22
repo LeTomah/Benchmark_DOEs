@@ -20,13 +20,13 @@ def create_pyo_env(graph,
         operational_nodes = list(G_full.nodes)
 
     # --- Définition du graphe opérationnel ---
-    G = G_full.subgraph(operational_nodes)
+    G = G_full.subgraph(operational_nodes).copy()
 
     # Création du modèle
     m = pyo.ConcreteModel()
 
     m.Nodes = pyo.Set(initialize=[b for b in G.nodes])
-    m.Lines = pyo.Set(initialize=[l for l in G.edges])
+    m.Lines = pyo.Set(initialize=[(u, v, k) for u, v, k in G.edges(keys=True)])
     m.i = pyo.Set(initialize=[0, 1])  # Initialize m.i with two generic elements
     m.j = pyo.Set(initialize=[0, 1])
 
@@ -75,24 +75,24 @@ def create_pyo_env(graph,
     m.I_min = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): calculate_current_bounds(
+            (u, v, k): calculate_current_bounds(
                 G,
-                G[u][v].get("max_i_ka"),
+                G[u][v][k].get("max_i_ka"),
                 G.nodes[u]["vn_kv"],
             )[0]
-            for (u, v) in m.Lines
+            for (u, v, k) in m.Lines
         },
         domain=pyo.Reals,
     )
     m.I_max = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): calculate_current_bounds(
+            (u, v, k): calculate_current_bounds(
                 G,
-                G[u][v].get("max_i_ka"),
+                G[u][v][k].get("max_i_ka"),
                 G.nodes[u]["vn_kv"],
             )[1]
-            for (u, v) in m.Lines
+            for (u, v, k) in m.Lines
         },
         domain=pyo.Reals,
     )

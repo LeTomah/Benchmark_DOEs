@@ -53,35 +53,37 @@ def constraints(m, G):
     m.upper_bound = pyo.Constraint(m.i, m.j, rule=upper_bound_rule)
 
     # Current magnitude constraint (I_min, I_max are assumed per-unit)
-    def current_bounds_rule(m, u, v, vert_pow, vert_volt):
+    def current_bounds_rule(m, u, v, k, vert_pow, vert_volt):
         # m.I is per-unit current
-        return pyo.inequality(m.I_min[u, v], m.I[u, v, vert_pow, vert_volt], m.I_max[u, v])
+        return pyo.inequality(m.I_min[u, v, k], m.I[u, v, k, vert_pow, vert_volt], m.I_max[u, v, k])
     m.CurrentBounds = pyo.Constraint(m.Lines, m.i, m.j, rule=current_bounds_rule)
 
     def phase_constr_rule(m, u, vert_pow, vert_volt):
         return pyo.inequality(m.theta_min, m.theta[u, vert_pow, vert_volt], m.theta_max)
     m.phaseConstr = pyo.Constraint(m.Nodes, m.i, m.j, rule=phase_constr_rule)
 
-    def dc_power_flow_rule(m, u, v, vert_pow, vert_volt):
-        if G[u][v]['b_pu']==None:
+    def dc_power_flow_rule(m, u, v, k, vert_pow, vert_volt):
+        if G[u][v][k]['b_pu'] is None:
             return pyo.Constraint.Skip
         else:
-            return m.F[u, v, vert_pow, vert_volt] == m.V_P[vert_volt] ** 2 * (G[u][v]['b_pu'] * (
-                    m.theta[u, vert_pow, vert_volt] - m.theta[v, vert_pow, vert_volt]))
+            return m.F[u, v, k, vert_pow, vert_volt] == m.V_P[vert_volt] ** 2 * (
+                G[u][v][k]['b_pu'] * (m.theta[u, vert_pow, vert_volt] - m.theta[v, vert_pow, vert_volt])
+            )
     m.DCFlow = pyo.Constraint(m.Lines, m.i, m.j, rule=dc_power_flow_rule)
 
-    def current_def_rule(m, u, v, vert_pow, vert_volt):
+    def current_def_rule(m, u, v, k, vert_pow, vert_volt):
         # This constraint relates per-unit current, per-unit voltage, and per-unit power flow.
         # In per-unit, P_pu = V_pu * I_pu. This is correct.
-        return m.I[u, v, vert_pow, vert_volt] * m.V_P[vert_volt] == m.F[u, v, vert_pow, vert_volt]
+        return m.I[u, v, k, vert_pow, vert_volt] * m.V_P[vert_volt] == m.F[u, v, k, vert_pow, vert_volt]
     m.current_def = pyo.Constraint(m.Lines, m.i, m.j, rule=current_def_rule)
 
     def power_balance_rule(m, n, vert_pow, vert_volt):
-        # Compute net flow into node n by summing over all lines (i,j) in m.Lines
+        # Compute net flow into node n by summing over all lines (i,j,k) in m.Lines
         expr = sum(
-            (m.F[i, j, vert_pow, vert_volt] if j == n else 0)
-            - (m.F[i, j, vert_pow, vert_volt] if i == n else 0)
-            for (i, j) in m.Lines)
+            (m.F[i, j, k, vert_pow, vert_volt] if j == n else 0)
+            - (m.F[i, j, k, vert_pow, vert_volt] if i == n else 0)
+            for (i, j, k) in m.Lines
+        )
         # If n is a parent node, subtract P_plus; otherwise use only E[n]
         if n in m.parents:
             return expr == m.E[n, vert_pow, vert_volt] - m.P_plus[n, vert_pow, vert_volt]
@@ -147,7 +149,7 @@ def run_opf(env_tuple):
     results = solver.solve(m, tee=True)
 
     # extrait quelques résultats
-    flows = {(u, v): m.F[u, v, 0, 0].value for (u, v) in m.Lines}
+    flows = {(u, v, k): m.F[u, v, k, 0, 0].value for (u, v, k) in m.Lines}
     status = str(results.solver.status)
     obj = pyo.value(m.objective)
     return {"status": status, "objective": obj, "flows": flows, "model": m, "graph": G}

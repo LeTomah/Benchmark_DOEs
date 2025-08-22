@@ -3,7 +3,8 @@ import networkx as nx
 from typing import Any, Set
 from bus_positions import extract_bus_positions
 
-def create_graph(net: Any) -> nx.Graph:
+
+def create_graph(net: Any) -> nx.MultiGraph:
     """Create a NetworkX graph from a pandapower network.
 
     Parameters
@@ -11,7 +12,7 @@ def create_graph(net: Any) -> nx.Graph:
     net : Any
         ``pandapowerNet`` instance providing buses, lines and transformers.
     """
-    G = nx.Graph()
+    G = nx.MultiGraph()
 
     pos = extract_bus_positions(net)
 
@@ -27,30 +28,35 @@ def create_graph(net: Any) -> nx.Graph:
         )
 
     # Ajouter les arêtes pour les lignes
-    for _, row in net.line.iterrows():
+    for idx, row in net.line.iterrows():
+        u, v = row["from_bus"], row["to_bus"]
+        x_ohm = row["x_ohm_per_km"] * row["length_km"]
+        V_kv = G.nodes[u]["vn_kv"]
+        b_pu = (V_kv ** 2) / (x_ohm * G.graph["s_base"])
         G.add_edge(
-            row["from_bus"],
-            row["to_bus"],
+            u,
+            v,
+            key=idx,
             type="line",
             name=row["name"],
             length=row["length_km"],
             std_type=row["std_type"],
-            x_ohm=row["x_ohm_per_km"] * row["length_km"],
+            x_ohm=x_ohm,
             max_i_ka=row.get("max_i_ka"),
+            b_pu=b_pu,
         )
-        u, v = row["from_bus"], row["to_bus"]
-        V_kv = G.nodes[u]["vn_kv"]
-        G[u][v]["b_pu"] = (V_kv ** 2) / (G[u][v]["x_ohm"] * G.graph["s_base"])
 
     # Ajouter les arêtes pour les transformateurs
-    for _, row in net.trafo.iterrows():
-        G.add_edge(row["hv_bus"], row["lv_bus"],
-                   type="trafo",
-                   name=row["name"],
-                   std_type = None,
-                   b_pu = None)
-        u, v = row["hv_bus"], row["lv_bus"]
-        G[u][v]["b_pu"] = None
+    for idx, row in net.trafo.iterrows():
+        G.add_edge(
+            row["hv_bus"],
+            row["lv_bus"],
+            key=idx,
+            type="trafo",
+            name=row["name"],
+            std_type=None,
+            b_pu=None,
+        )
 
     # Ajouter les générateurs, sgens et les charges comme attributs aux nœuds
     for _, row in net.gen.iterrows():
@@ -173,9 +179,17 @@ def plot_network(G, labels=None, node_colors=None):
     plt.axis("equal")
     plt.show()
 
-def op_graph(full_graph: nx.DiGraph, operational_nodes: Set[int]) -> nx.DiGraph:
-    """Return the subgraph induced by ``operational_nodes``."""
-    return full_graph.subgraph(operational_nodes).copy()
+def op_graph(full_graph: nx.MultiGraph, operational_nodes: Set[int]) -> nx.MultiGraph:
+    """Return the subgraph induced by ``operational_nodes`` preserving edge keys."""
+    sub = nx.MultiGraph()
+    sub.graph.update(full_graph.graph)
+    for n, data in full_graph.nodes(data=True):
+        if n in operational_nodes:
+            sub.add_node(n, **data)
+    for u, v, k, data in full_graph.edges(keys=True, data=True):
+        if u in operational_nodes and v in operational_nodes:
+            sub.add_edge(u, v, key=k, **data)
+    return sub
 
 if __name__ == "__main__":
     # Petit test manuel pour vérifier l'extraction des positions

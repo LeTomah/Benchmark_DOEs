@@ -30,22 +30,22 @@ def plot_power_flow(m, G, i, j):
     edge_colors = []
     edge_labels = {}
 
-    for u, v in G.edges():
+    for u, v, k in G.edges(keys=True):
         try:
             # Correct the sign of the flow value for plotting
-            flow_value = m.F[u, v, i, j].value
+            flow_value = m.F[u, v, k, i, j].value
             if flow_value is not None:
-                edge_labels[(u, v)] = f"{round(flow_value, 4)}"
+                edge_labels[(u, v, k)] = f"{round(flow_value, 4)}"
                 if flow_value > 0:
-                    edge_colors.append('blue')  # Positive flow (now correctly represents flow from u to v)
+                    edge_colors.append('blue')  # Positive flow
                 elif flow_value < 0:
-                    edge_colors.append('red')  # Negative (reverse) flow (now correctly represents flow from v to u)
+                    edge_colors.append('red')  # Negative flow
                 else:
-                    edge_colors.append('gray') # No flow
+                    edge_colors.append('gray')  # No flow
             else:
-                edge_colors.append('gray') # No flow value
-        except:
-            edge_colors.append('gray') # Handle cases where edge might not be in m.F
+                edge_colors.append('gray')  # No flow value
+        except Exception:
+            edge_colors.append('gray')  # Handle cases where edge might not be in m.F
 
     # Draw the network
     nx.draw(
