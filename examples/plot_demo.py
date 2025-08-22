@@ -9,19 +9,20 @@ from plot_utils import get_or_compute_pos, draw_network, draw_side_by_side
 import matplotlib.pyplot as plt
 
 G = nx.Graph()
-G.add_node(1, label="Prod A", is_generator=True, p_mw=50)
-G.add_node(2, label="Load B", p_mw=-30)
-G.add_node(3, label="Load C", p_mw=-20)
+G.add_node(1, label="A")
+G.add_node(2, label="B")
+G.add_node(3, label="C")
 G.add_edges_from([(1, 2), (2, 3)])
 
 pos = get_or_compute_pos(G)
-ax = draw_network(G, pos=pos, node_size=120, with_labels=True)
+draw_network(G, pos=pos)
 plt.show()
 
 # Variante côte à côte
 H = G.copy()
-H.add_node(4, label="Prod D", is_generator=True, p_mw=40)
+H.add_node(4, label="D")
 H.add_edge(1, 4)
 
 fig = draw_side_by_side({"Full": G, "Operational": H}, layout="spring", common_pos=True)
 plt.show()
+print("demo done")

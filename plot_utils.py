@@ -3,12 +3,10 @@ from __future__ import annotations
 """Utility functions for plotting electrical networks."""
 
 from pathlib import Path
-import os
-from typing import Dict, Hashable, Iterable, Optional, Tuple
+from typing import Dict, Hashable, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
-from matplotlib.patches import Patch
 
 Pos = Dict[Hashable, Tuple[float, float]]
 
@@ -56,37 +54,6 @@ def get_or_compute_pos(G: nx.Graph, layout: str = "spring") -> Pos:
     return pos
 
 
-def classify_nodes(G: nx.Graph) -> Dict[str, Iterable[Hashable]]:
-    """Classify nodes of ``G`` into producers and consumers.
-
-    Parameters
-    ----------
-    G : nx.Graph
-        Graph whose nodes are classified.
-
-    Returns
-    -------
-    dict
-        Dictionary with keys ``"producers"`` and ``"consumers"`` containing
-        iterables of node identifiers.
-    """
-
-    producers = []
-    consumers = []
-    for n, data in G.nodes(data=True):
-        if data.get("is_generator") is True:
-            producers.append(n)
-        elif data.get("type") in {"gen", "generator", "slack"}:
-            producers.append(n)
-        elif data.get("p_mw", 0) > 0:
-            producers.append(n)
-        elif data.get("p_mw", 0) < 0:
-            consumers.append(n)
-        else:
-            consumers.append(n)
-    return {"producers": producers, "consumers": consumers}
-
-
 def draw_network(
     G: nx.Graph,
     pos: Optional[Pos] = None,
@@ -96,7 +63,7 @@ def draw_network(
     with_labels: bool = True,
     label_attr: str = "label",
 ) -> plt.Axes:
-    """Draw ``G`` with producers in green and consumers in red.
+    """Draw ``G`` with visible edges and node labels.
 
     Parameters
     ----------
@@ -127,12 +94,11 @@ def draw_network(
 
     ax = plt.gca()
 
-    classification = classify_nodes(G)
     arrows = G.is_directed()
 
     edge_kwargs = dict(width=edge_width, alpha=edge_alpha, arrows=arrows)
     if arrows:
-        edge_kwargs.update(arrowstyle='-|>', arrowsize=10)
+        edge_kwargs.update(arrowstyle="-|>", arrowsize=10)
     edge_collection = nx.draw_networkx_edges(
         G,
         pos,
@@ -146,37 +112,19 @@ def draw_network(
         else:
             edge_collection.set_zorder(1)
 
-    producer_nodes = nx.draw_networkx_nodes(
+    node_collection = nx.draw_networkx_nodes(
         G,
         pos,
-        nodelist=list(classification["producers"]),
-        node_color="green",
         node_size=node_size,
         ax=ax,
     )
-    if producer_nodes is not None:
-        producer_nodes.set_zorder(2)
-
-    consumer_nodes = nx.draw_networkx_nodes(
-        G,
-        pos,
-        nodelist=list(classification["consumers"]),
-        node_color="red",
-        node_size=node_size,
-        ax=ax,
-    )
-    if consumer_nodes is not None:
-        consumer_nodes.set_zorder(2)
+    if node_collection is not None:
+        node_collection.set_zorder(2)
 
     if with_labels:
         labels = {n: G.nodes[n].get(label_attr, n) for n in G.nodes}
         nx.draw_networkx_labels(G, pos, labels=labels, font_size=8, ax=ax)
 
-    handles = [
-        Patch(color="green", label="Producer"),
-        Patch(color="red", label="Consumer"),
-    ]
-    ax.legend(handles=handles)
     ax.set_axis_off()
     ax.figure.tight_layout()
     return ax
@@ -214,10 +162,10 @@ def draw_side_by_side(
         axes = [axes]
 
     if common_pos:
-        base = nx.Graph() if not next(iter(graphs.values())).is_directed() else nx.DiGraph()
-        for g in graphs.values():
-            base.add_nodes_from(g.nodes())
-            base.add_edges_from(g.edges())
+        graph_list = list(graphs.values())
+        base = graph_list[0].copy()
+        for g in graph_list[1:]:
+            base = nx.compose(base, g)
         pos_all = get_or_compute_pos(base, layout=layout)
         positions = {name: {n: pos_all[n] for n in g.nodes()} for name, g in graphs.items()}
     else:
@@ -236,6 +184,5 @@ def save_figure(fig: plt.Figure, path: str, dpi: int = 150) -> None:
     """Save ``fig`` to ``path`` creating parent directories if needed."""
 
     out_path = Path(path)
-    if out_path.parent:
-        os.makedirs(out_path.parent, exist_ok=True)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=dpi)
