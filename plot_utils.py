@@ -140,7 +140,11 @@ def draw_network(
         **edge_kwargs,
     )
     if edge_collection is not None:
-        edge_collection.set_zorder(1)
+        if isinstance(edge_collection, list):
+            for collection in edge_collection:
+                collection.set_zorder(1)
+        else:
+            edge_collection.set_zorder(1)
 
     producer_nodes = nx.draw_networkx_nodes(
         G,
