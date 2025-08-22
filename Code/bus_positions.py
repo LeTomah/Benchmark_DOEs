@@ -104,4 +104,8 @@ def extract_bus_positions(net) -> Dict[int, Tuple[float, float]]:
     if missing:
         raise ValueError(f"Impossible de déterminer des coordonnées pour les bus {sorted(missing)}")
 
+    for idx, (x, y) in pos.items():
+        name = net.bus.at[idx, "name"] if "name" in net.bus.columns else str(idx)
+        print(f'"{name}": ({x}, {y})')
+
     return pos
