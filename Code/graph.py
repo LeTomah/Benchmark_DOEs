@@ -72,9 +72,7 @@ def create_graph(net: Any) -> nx.Graph:
         G.nodes[row["bus"]]["type"] = "ext_grid"
         G.nodes[row["bus"]]["grid_name"] = row["name"]
 
-    # -------------------------
     # 2. Ajout des puissances consommées et injectées aux nœuds
-    # -------------------------
     nx.set_node_attributes(G, 0.0, 'P_load')
     nx.set_node_attributes(G, 0.0, 'P_gen')
 
@@ -98,9 +96,7 @@ def create_graph(net: Any) -> nx.Graph:
     for n in G.nodes:
         G.nodes[n]["P"] = G.nodes[n]["P_gen"] - G.nodes[n]["P_load"]
 
-    # -------------------------
     # Donner accès à G
-    # -------------------------
     node_attrs = {n: G.nodes[n] for n in G.nodes}
     return G
 
@@ -129,49 +125,6 @@ def calculate_current_bounds(G, max_current_kA, v_base):
 
     # If no current limit is provided, use large bounds
     return -1000, 1000, i_base_kA
-# -------------------------
-# 5. Fonction d'affichage
-# -------------------------
-
-def plot_network(G, labels=None, node_colors=None):
-    import networkx as nx, matplotlib.pyplot as plt
-    pos = nx.get_node_attributes(G, 'pos')
-
-    # -------------------------
-    # 3. Préparer les couleurs des nœuds en fonction de P
-    # -------------------------
-    node_colors = []
-    for n, data in G.nodes(data=True):
-        if data["P"] > 0:
-            node_colors.append("green")  # producteur
-        elif data["P"] < 0:
-            node_colors.append("red")  # consommateur
-        else:
-            node_colors.append("gray")  # neutre
-
-    # -------------------------
-    # 4. Préparer les labels : Nom + P_net
-    # -------------------------
-    labels = {n: f"{data['label']}\nP={round(data['P'], 2)}MW"
-              for n, data in G.nodes(data=True)}
-
-    plt.figure(figsize=(12, 8))
-
-    nx.draw(
-        G, pos,
-        with_labels=True, labels=labels,
-        node_size=1200, node_color=node_colors,
-        edgecolors="black", font_size=8,
-        alpha=0.85
-    )
-
-    # Labels des arêtes (type ligne ou trafo)
-    edge_labels = nx.get_edge_attributes(G, 'type')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=7)
-
-    plt.title("Réseau électrique avec puissances (P_net)")
-    plt.axis("equal")
-    plt.show()
 
 def op_graph(full_graph: nx.DiGraph, operational_nodes: Set[int]) -> nx.DiGraph:
     """Return the subgraph induced by ``operational_nodes``."""

@@ -8,9 +8,21 @@ Il suffit de choisir :
 Et de renseigner ses identifiants gurobi dans optimization.py (l.131->133)
 puis de lancer :  init.py
 """
+
+from pathlib import Path
+import sys
+
+# Allow importing project-level utilities
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from check_requirements import install_missing_packages
 from optimization import optim_problem
-from plot_utils import plot_power_flow
+from plot_utils import (
+    get_or_compute_pos,
+    draw_network,
+    draw_side_by_side,
+)
+import matplotlib.pyplot as plt
 import pandapower.networks as pn
 
 # ---- Paramétrage utilisateur ----
@@ -29,5 +41,13 @@ res = optim_problem(
     children_nodes=CHILDREN_NODES,
     opf_only=OPF_ONLY)          # run the optimization
 
-plot_power_flow(res["full"]["model"], res["full"]["graph"], 0, 1)
-plot_power_flow(res["operational"]["model"], res["operational"]["graph"], 0, 1)
+fig = draw_side_by_side(
+    {
+        "Full": res["full"]["graph"],
+        "Operational": res["operational"]["graph"],
+    },
+    layout="spring",
+    common_pos=True,
+)
+plt.show()
+
