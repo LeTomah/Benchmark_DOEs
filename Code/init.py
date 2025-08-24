@@ -14,11 +14,11 @@ from plot_utils import plot_power_flow
 import pandapower.networks as pn
 
 # ---- Paramétrage utilisateur ----
-TEST_CASE = pn.example_multivoltage()           # Chemin de votre fichier IEEE
+TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"           # Chemin de votre fichier pandapower
 OPERATIONAL_NODES = [4, 5, 9, 10, 11, 12]   # Nœuds conservés dans le sous-réseau
-PARENT_NODES      = [4]             # Injectent la puissance (P_plus)
-CHILDREN_NODES    = [9, 10, 11, 12]           # Absorbent la puissance (P_minus)
-OPF_ONLY          = False           # Choix du modèle d'optimisation
+PARENT_NODES      = [4]             # Fournissent une tension contractuelle
+CHILDREN_NODES    = [9, 10, 11, 12]           # Une puissance de consommation/d'injection leur est imposé
+OPF_ONLY          = True           # Choix du modèle d'optimisation
 # ---------------------------------
 
 install_missing_packages()      # requirements.txt auto-install

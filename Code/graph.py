@@ -105,7 +105,7 @@ def create_graph(net: Any) -> nx.Graph:
     return G
 
 #Calcul des valeurs max de courant dans chaque ligne
-def calculate_current_bounds(G, max_current_kA, v_base):
+def calculate_current_bounds(G, max_i_ka, v_base):
     """Compute current limits in per-unit from network data.
 
     The pandapower network provides the maximum current rating of each line
@@ -117,18 +117,18 @@ def calculate_current_bounds(G, max_current_kA, v_base):
         v_base (float): Voltage base of the line in kV.
 
     Returns:
-        tuple: (I_min_pu, I_max_pu, i_base_kA). When the maximum current is not
+        tuple: (I_min_pu, I_max_pu, base_i_ka). When the maximum current is not
         specified, a wide default range is returned.
     """
-    i_base_kA = G.graph["s_base"] / (math.sqrt(3) * v_base)  # kA
+    base_i_ka = G.graph["s_base"] / (math.sqrt(3) * v_base)  # kA
 
-    if max_current_kA is not None and not math.isnan(max_current_kA):
-        I_max = max_current_kA / i_base_kA
+    if max_i_ka is not None and not math.isnan(max_i_ka):
+        I_max = max_i_ka / base_i_ka
         I_min = -I_max
-        return I_min, I_max, i_base_kA
+        return I_min, I_max, base_i_ka
 
     # If no current limit is provided, use large bounds
-    return -1000, 1000, i_base_kA
+    return -1000, 1000, base_i_ka
 # -------------------------
 # 5. Fonction d'affichage
 # -------------------------

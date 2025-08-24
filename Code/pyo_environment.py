@@ -1,6 +1,5 @@
 # pyo_environment.py
-from typing import Dict, Any, Set, Optional
-from app_types import EnvPyo
+from typing import Dict, Optional
 import pyomo.environ as pyo
 from graph import calculate_current_bounds
 

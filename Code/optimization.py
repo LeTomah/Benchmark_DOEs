@@ -7,7 +7,7 @@ from loader import load_network
 # Retrieve Gurobi credentials from environment variables instead of
 # hardcoding them in the source code. See ``gurobi_config`` for
 # details on the expected variables.
-from gurobi_config import get_wls_params
+from Code.Data.gurobi_config import get_wls_params
 
 def _build_gurobi_solver():
     """Create a Gurobi solver with credentials from the environment."""
