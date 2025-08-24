@@ -109,4 +109,4 @@ def create_pyo_env(graph,
     return m, G
 
 if __name__ == "__main__":
-    create_pyo_env("Networks/network_test.py")
+    create_pyo_env("Data/Networks/network_test.py")
