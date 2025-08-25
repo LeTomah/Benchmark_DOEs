@@ -1,6 +1,7 @@
 # plot_utils.py
 import networkx as nx
 import matplotlib.pyplot as plt
+import numpy as np
 
 def plot_power_flow(m, G, i, j):
     pos = nx.get_node_attributes(G, 'pos')
@@ -74,4 +75,28 @@ def plot_power_flow(m, G, i, j):
 
     plt.title(f"Power Flow (per-unit) for i={i}, j={j}")
     plt.axis("equal")
+    plt.show()
+
+
+def plot_DOE(m, filename="child_nodes_envelopes.pdf"):
+    """Plot power envelope and DSO estimation for child nodes."""
+    children = list(m.children)
+    p0 = [m.P_C_set[n, 0].value for n in children]
+    p1 = [m.P_C_set[n, 1].value for n in children]
+    info = [m.info_DSO_param[n].value for n in children]
+    x = np.arange(len(children)) * 5e-4
+    plt.figure(figsize=(5, 6))
+    for xs, hi, lo in zip(x, p0, p1):
+        plt.plot([xs, xs], [lo, hi], "o-", color="blue")
+    plt.plot(x, info, "s", label="DSO power demand estimation")
+    alpha = getattr(m, "alpha", None)
+    beta = getattr(m, "beta", None)
+    plt.plot([], [], "o-", color="blue",
+             label=f"Power envelope ($\\alpha$={alpha.value if alpha else None}, $\\beta$={beta.value if beta else None})")
+    plt.xticks(x, children)
+    plt.xlabel("Child Node Index")
+    plt.ylabel("Power (in per-unit)")
+    plt.legend(loc="upper left")
+    plt.grid(True)
+    plt.savefig(filename)
     plt.show()
