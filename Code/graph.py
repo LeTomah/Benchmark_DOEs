@@ -1,7 +1,7 @@
 import math
 import networkx as nx
 from typing import Any, Set
-from bus_positions import extract_bus_positions
+from Code.Data.bus_positions import extract_bus_positions
 
 def create_graph(net: Any) -> nx.Graph:
     """Create a NetworkX graph from a pandapower network.

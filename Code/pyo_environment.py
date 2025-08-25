@@ -29,7 +29,9 @@ def create_pyo_env(graph,
     m.i = pyo.Set(initialize=[0, 1])  # Initialize m.i with two generic elements
     m.j = pyo.Set(initialize=[0, 1])
 
-    m.P = pyo.Param(m.Nodes, initialize={n: - G.nodes[n].get('P') for n in G.nodes}, domain=pyo.Reals, mutable=True)
+    m.P = pyo.Param(m.Nodes,
+                    initialize={n: - G.nodes[n].get('P') for n in G.nodes},
+                    domain=pyo.Reals, mutable=True)
 
     # --- Définir parents/enfants dynamiquement ---
     if parent_nodes is None:
@@ -38,6 +40,10 @@ def create_pyo_env(graph,
         children_nodes = [n for n in operational_nodes if n not in parent_nodes]
     m.children = pyo.Set(initialize=children_nodes)
     m.parents = pyo.Set(initialize=parent_nodes)
+
+    # Build sets based on sign of parameter P
+    m.PositiveNodes = pyo.Set(initialize=[n for n in m.Nodes if pyo.value(m.P[n]) >= 0])
+    m.NegativeNodes = pyo.Set(initialize=[n for n in m.Nodes if pyo.value(m.P[n]) <= 0])
 
     # Variables principales
     m.F = pyo.Var(m.Lines, m.i, m.j, domain=pyo.Reals)  # active power flow through lines
@@ -48,7 +54,8 @@ def create_pyo_env(graph,
     m.P_plus = pyo.Var(m.parents, m.i, m.j, domain=pyo.Reals)  # power entering the operational graph
     m.P_minus = pyo.Var(m.children, m.i, m.j, domain=pyo.Reals)  # power leaving the operational graph
     m.P_C_set = pyo.Var(m.children, m.i, domain=pyo.Reals)  # vertices of the power envelope at each child node
-
+    m.z = pyo.Var(m.Nodes, m.i, m.j, domain=pyo.NonNegativeReals)
+    m.curt = pyo.Var(m.Nodes, m.i, m.j, domain=pyo.Reals)
     m.aux = pyo.Var(m.children, domain=pyo.Reals)
     m.tot = pyo.Var(domain= pyo.Reals)
     m.O = pyo.Var(domain=pyo.NonNegativeReals)
