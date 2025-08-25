@@ -15,9 +15,9 @@ import pandapower.networks as pn
 
 # ---- Paramétrage utilisateur ----
 TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"
-OPERATIONAL_NODES = []            # [] => OPF ; sinon => DOE
-PARENT_NODES      = [4]
-CHILDREN_NODES    = [9, 10, 11, 12]
+OPERATIONAL_NODES = [0, 1, 2, 3, 4, 5]            # [] => OPF ; sinon => DOE
+PARENT_NODES      = [0]
+CHILDREN_NODES    = [3]
 # ---------------------------------
 
 install_missing_packages()
