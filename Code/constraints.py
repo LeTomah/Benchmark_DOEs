@@ -145,10 +145,10 @@ def constraints(m, G):
     m.diff_bis_dso_constraint = pyo.Constraint(m.children,
                                                rule=diff_bis_dso_rule)
 
-    m.tot_diff = pyo.Var(domain=pyo.Reals)
-    def tot_diff_rule(m):
-        return m.tot_diff == sum(m.diff_DSO[u] for u in m.children)
-    m.tot_diff_constraint = pyo.Constraint(rule=tot_diff_rule)
+    m.tot_diff_DSO = pyo.Var(domain=pyo.Reals)
+    def tot_diff_dso_rule(m):
+        return m.tot_diff_DSO == sum(m.diff_DSO[u] for u in m.children)
+    m.tot_diff_dso_constraint = pyo.Constraint(rule=tot_diff_dso_rule)
 
     # Constraint for positive P: upper bound
     def net_power_upper_rule(m, n, vert_pow, vert_volt):
@@ -169,10 +169,8 @@ def constraints(m, G):
     m.sign_E_lower = pyo.Constraint(m.NegativeNodes, m.i, m.j, rule=sign_E_lower_rule)
 
     # -------------------------
-    # Objective
+    # Objective (DOE case)
     # -------------------------
-    # Define alpha and beta as parameters of the model
-
-    def objective_rule(m):
-        return m.tot - m.alpha * m.O - m.beta * m.tot_bis
-    m.objective = pyo.Objective(rule=objective_rule, sense=pyo.maximize)
+    def objective_rule_doe(m):
+        return m.tot_P - m.alpha * m.O - m.beta * m.tot_diff_DSO
+    m.objective_doe = pyo.Objective(rule=objective_rule_doe, sense=pyo.maximize)

@@ -1,6 +1,7 @@
 import math
 import networkx as nx
-from typing import Any, Set
+from collections import deque
+from typing import Any, Dict, Iterable, Set
 from Code.Data.bus_positions import extract_bus_positions
 
 def create_graph(net: Any) -> nx.Graph:
@@ -176,6 +177,39 @@ def plot_network(G, labels=None, node_colors=None):
 def op_graph(full_graph: nx.DiGraph, operational_nodes: Set[int]) -> nx.DiGraph:
     """Return the subgraph induced by ``operational_nodes``."""
     return full_graph.subgraph(operational_nodes).copy()
+
+
+def compute_info_dso(
+    G: nx.Graph,
+    operational_nodes: Iterable[int],
+    children_nodes: Iterable[int],
+    p_attr: str = "P",
+) -> Dict[int, float]:
+    op_set: Set[int] = set(operational_nodes)
+    children_set: Set[int] = set(children_nodes)
+
+    def node_power(n: int) -> float:
+        return float(G.nodes[n].get(p_attr, 0.0))
+
+    info: Dict[int, float] = {}
+    for c in children_set:
+        total = node_power(c)
+        for v in G.neighbors(c):
+            if v in op_set:
+                continue
+            seen = {c}
+            q = deque([v])
+            while q:
+                u = q.popleft()
+                if u in seen or u in op_set:
+                    continue
+                seen.add(u)
+                total += node_power(u)
+                for w in G.neighbors(u):
+                    if w not in seen and w not in op_set:
+                        q.append(w)
+        info[c] = total
+    return info
 
 if __name__ == "__main__":
     # Petit test manuel pour vérifier l'extraction des positions
