@@ -131,6 +131,7 @@ def constraints(m, G):
     m.aux_constraint = pyo.Constraint(m.children,
                                       rule=aux_constraint_rule)
 
+    m.tot_P = pyo.Var(domain=pyo.Reals)
     def tot_P_rule(m):
         return m.tot_P == sum(m.aux[u] for u in m.children)
     m.tot_P_constraint = pyo.Constraint(rule=tot_P_rule)
@@ -174,5 +175,5 @@ def constraints(m, G):
     # Define alpha and beta as parameters of the model
 
     def objective_rule(m):
-        return m.tot - m.alpha * m.O - m.beta * m.tot_bis
+        return m.tot_P - m.alpha * m.tot_P - m.beta * m.tot_diff
     m.objective = pyo.Objective(rule=objective_rule, sense=pyo.maximize)
