@@ -6,6 +6,7 @@ from loader import load_network
 import constraints
 import constraints_opf as copf
 from Data.gurobi_config import get_wls_params
+from plot_utils import plot_DOE
 
 
 def _build_gurobi_solver():
@@ -66,4 +67,6 @@ def optim_problem(test_case,
     )
     m, G = env_op
     constraints.constraints(m, G)  # crée m.objective_doe
-    return {"operational": _solve_and_pack(m, G, "objective_doe")}
+    result = _solve_and_pack(m, G, "objective_doe")
+    plot_DOE(m)
+    return {"operational": result}
