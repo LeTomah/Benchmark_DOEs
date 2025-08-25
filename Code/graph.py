@@ -16,7 +16,7 @@ def create_graph(net: Any) -> nx.Graph:
 
     pos = extract_bus_positions(net)
 
-    G.graph["s_base"] = 100  # MVA
+    G.graph["s_base"] = 100  # MVA base for per-unit calculations
 
     # Ajouter les nœuds
     for idx, row in net.bus.iterrows():
@@ -54,46 +54,47 @@ def create_graph(net: Any) -> nx.Graph:
         G[u][v]["b_pu"] = None
 
     # Ajouter les générateurs, sgens et les charges comme attributs aux nœuds
+    s_base = G.graph["s_base"]
     for _, row in net.gen.iterrows():
         G.nodes[row["bus"]]["type"] = "gen"
         G.nodes[row["bus"]]["gen_name"] = row["name"]
-        G.nodes[row["bus"]]["gen_power"] = row["p_mw"]
+        G.nodes[row["bus"]]["gen_power"] = row["p_mw"] / s_base
 
     for _, row in net.sgen.iterrows():
         G.nodes[row["bus"]]["type"] = "sgen"
         G.nodes[row["bus"]]["sgen_name"] = row["name"]
-        G.nodes[row["bus"]]["sgen_power"] = row["p_mw"]
+        G.nodes[row["bus"]]["sgen_power"] = row["p_mw"] / s_base
 
     for _, row in net.load.iterrows():
         G.nodes[row["bus"]]["type"] = "load"
         G.nodes[row["bus"]]["load_name"] = row["name"]
-        G.nodes[row["bus"]]["load_power"] = row["p_mw"]
+        G.nodes[row["bus"]]["load_power"] = row["p_mw"] / s_base
 
     for _, row in net.ext_grid.iterrows():
         G.nodes[row["bus"]]["type"] = "ext_grid"
         G.nodes[row["bus"]]["grid_name"] = row["name"]
 
     # -------------------------
-    # 2. Ajout des puissances consommées et injectées aux nœuds
+    # 2. Ajout des puissances consommées et injectées aux nœuds (p.u.)
     # -------------------------
     nx.set_node_attributes(G, 0.0, 'P_load')
     nx.set_node_attributes(G, 0.0, 'P_gen')
 
     # Charges
     for _, row in net.load.iterrows():
-        G.nodes[row["bus"]]["P_load"] += row["p_mw"]
+        G.nodes[row["bus"]]["P_load"] += row["p_mw"] / s_base
 
     # Générateurs
     for _, row in net.gen.iterrows():
-        G.nodes[row["bus"]]["P_gen"] += row["p_mw"]
+        G.nodes[row["bus"]]["P_gen"] += row["p_mw"] / s_base
 
     # Générateurs statiques (sgen)
     for _, row in net.sgen.iterrows():
-        G.nodes[row["bus"]]["P_gen"] += row["p_mw"]
+        G.nodes[row["bus"]]["P_gen"] += row["p_mw"] / s_base
 
     # Source externe
     for _, row in net.ext_grid.iterrows():
-        G.nodes[row["bus"]]["P_gen"] += 70.0
+        G.nodes[row["bus"]]["P_gen"] += 70.0 / s_base
 
     # Calcul de P
     for n in G.nodes:
@@ -153,7 +154,7 @@ def plot_network(G, labels=None, node_colors=None):
     # -------------------------
     # 4. Préparer les labels : Nom + P_net
     # -------------------------
-    labels = {n: f"{data['label']}\nP={round(data['P'], 2)}MW"
+    labels = {n: f"{data['label']}\nP={round(data['P'], 2)} p.u."
               for n, data in G.nodes(data=True)}
 
     plt.figure(figsize=(12, 8))
@@ -170,7 +171,7 @@ def plot_network(G, labels=None, node_colors=None):
     edge_labels = nx.get_edge_attributes(G, 'type')
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=7)
 
-    plt.title("Réseau électrique avec puissances (P_net)")
+    plt.title("Réseau électrique avec puissances (P_net en p.u.)")
     plt.axis("equal")
     plt.show()
 

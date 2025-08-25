@@ -12,7 +12,6 @@ def create_pyo_env(graph,
 #def create_pyo_environ(test_case, operational_nodes=None, parent_nodes=None, children_nodes=None):
     # Charger le graphe complet
     G_full = graph
-    #s_base = G_full.graph["s_base"]
 
     # Si l'utilisateur ne donne rien, on prend tous les nœuds
     if operational_nodes is None:
@@ -104,13 +103,7 @@ def create_pyo_env(graph,
     )
 
 
-    # Calcul du per unit
-    for u in G.nodes():
-        if G.nodes[u].get('P', 0.0) / G_full.graph["s_base"] == 0:
-            m.P[u] = 0
-        else:
-            G.nodes[u]['P_pu'] = G.nodes[u].get('P', 0.0) / G_full.graph["s_base"]
-            m.P[u] = - G.nodes[u]['P_pu']
+    # Les puissances sont déjà stockées en per unit dans le graphe
 
     # Donner accès à m :
     return m, G
