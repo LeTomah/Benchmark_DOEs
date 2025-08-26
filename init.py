@@ -9,7 +9,7 @@ Et de renseigner ses identifiants gurobi dans optimization.py (l.131->133)
 puis de lancer :  init.py
 """
 
-from check_requirements import check_packages
+from core.check_requirements import check_packages
 from core.optimization import optim_problem
 from viz.plot_alloc_alpha import plot_alloc_alpha
 from viz.plot_network import plot_network
