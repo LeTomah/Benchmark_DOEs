@@ -9,7 +9,7 @@ Et de renseigner ses identifiants gurobi dans optimization.py (l.131->133)
 puis de lancer :  init.py
 """
 
-from check_requirements import install_missing_packages
+from check_requirements import check_packages
 from optimization import optim_problem
 from plot_utils import plot_alloc_alpha, plot_network, plot_power_flow
 
@@ -31,7 +31,10 @@ ALPHA_MAX = 4.0
 ALPHA_STEP = 0.1
 # ---------------------------------
 
-install_missing_packages()
+
+CHECK_REQ = False
+if CHECK_REQ:
+    check_packages()
 
 # Optionally scan multiple ``alpha`` values and display the resulting metrics
 # before running the main optimisation.

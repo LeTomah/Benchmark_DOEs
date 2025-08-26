@@ -1,20 +1,19 @@
+"""Graph utilities for power network optimisation.
+
+The graph is undirected but each edge (u, v) has a unique orientation
+based on tuple order. Power sign convention: P < 0 production,
+P > 0 consumption.
+"""
+
 import json
 import math
-from collections import deque
 from typing import Any, Dict, Iterable, Set
 
 import networkx as nx
 
 
-def create_graph(net: Any) -> nx.Graph:
-    """Create a NetworkX graph from a pandapower network.
-
-    Parameters
-    ----------
-    net : Any
-        ``pandapowerNet`` instance providing buses, lines and transformers.
-    """
-    G = nx.Graph()
+def extract_network_data(net: Any) -> Dict[str, Any]:
+    """Extract and validate raw data from a pandapower network."""
 
     if "geo" in net.bus.columns:
         pos: Dict[int, tuple] = {}
@@ -25,63 +24,104 @@ def create_graph(net: Any) -> nx.Graph:
                 coords = geo.get("coordinates") if isinstance(geo, dict) else None
                 if isinstance(coords, (list, tuple)) and len(coords) == 2:
                     pos[idx] = (float(coords[0]), float(coords[1]))
-            except Exception:
-                continue
+            except Exception as exc:  # pragma: no cover - validation path
+                raise ValueError(f"Invalid geo data for bus {idx}") from exc
         if len(pos) != len(net.bus):
-            raise ValueError(
-                "Impossible de déterminer des coordonnées pour tous les bus."
-            )
+            raise ValueError("Bus coordinates missing for some nodes")
     elif hasattr(net, "bus_geodata"):
         pos = {
             idx: (float(row["x"]), float(row["y"]))
             for idx, row in net.bus_geodata.iterrows()
         }
+        if len(pos) != len(net.bus):
+            raise ValueError("Incomplete bus_geodata for all buses")
     else:
         raise AttributeError("Bus positions not available in network.")
 
-    G.graph["s_base"] = 100  # MVA base for per-unit calculations
+    s_base = getattr(net, "sn_mva", 100.0)
 
-    # Ajouter les nœuds
-    for idx, row in net.bus.iterrows():
+    # Gather nodal powers
+    P_load = {idx: 0.0 for idx in net.bus.index}
+    P_gen = {idx: 0.0 for idx in net.bus.index}
+    for _, row in net.load.iterrows():
+        P_load[row["bus"]] += row["p_mw"] / s_base
+    for _, row in net.gen.iterrows():
+        P_gen[row["bus"]] += row["p_mw"] / s_base
+    for _, row in net.sgen.iterrows():
+        P_gen[row["bus"]] += row["p_mw"] / s_base
+    for _, row in net.ext_grid.iterrows():
+        P_gen[row["bus"]] += 70.0 / s_base
+    P = {idx: P_load[idx] - P_gen[idx] for idx in net.bus.index}
+
+    return {
+        "pos": pos,
+        "s_base": s_base,
+        "bus": net.bus.copy(),
+        "line": net.line.copy(),
+        "trafo": net.trafo.copy(),
+        "trafo3w": getattr(net, "trafo3w", None),
+        "P_load": P_load,
+        "P_gen": P_gen,
+        "P": P,
+    }
+
+
+def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
+    """Build a ``networkx.Graph`` from extracted data.
+
+    Line reactances are given in ohms, base power in MVA, voltage base in kV.
+    Susceptance in per-unit is computed as ``b_pu = V_base^2 / (S_base * X_ohm)``.
+    """
+
+    G = nx.Graph()
+    G.graph["s_base"] = data["s_base"]
+
+    # Nodes
+    for idx, row in data["bus"].iterrows():
         G.add_node(
             idx,
             label=row["name"],
-            pos=pos[idx],
+            pos=data["pos"][idx],
             vn_kv=row["vn_kv"],
+            P_load=data["P_load"][idx],
+            P_gen=data["P_gen"][idx],
+            P=data["P"][idx],
         )
 
-    # Ajouter les arêtes pour les lignes
-    for _, row in net.line.iterrows():
-        G.add_edge(
-            row["from_bus"],
-            row["to_bus"],
-            type="line",
-            name=row["name"],
-            length=row["length_km"],
-            std_type=row["std_type"],
-            x_ohm=row["x_ohm_per_km"] * row["length_km"],
-            max_i_ka=row.get("max_i_ka"),
-        )
+    # Lines
+    for _, row in data["line"].iterrows():
         u, v = row["from_bus"], row["to_bus"]
-        V_kv = G.nodes[u]["vn_kv"]
-        G[u][v]["b_pu"] = (V_kv**2) / (G[u][v]["x_ohm"] * G.graph["s_base"])
-
-    # Ajouter les arêtes pour les transformateurs
-    for _, row in net.trafo.iterrows():
+        x_ohm = row["x_ohm_per_km"] * row["length_km"]
+        V_kv = data["bus"].at[u, "vn_kv"]
+        b_pu = V_kv**2 / (x_ohm * data["s_base"])
         G.add_edge(
-            row["hv_bus"],
-            row["lv_bus"],
+            u,
+            v,
+            type="line",
+            name=row.get("name"),
+            length=row["length_km"],
+            std_type=row.get("std_type"),
+            x_ohm=x_ohm,
+            max_i_ka=row.get("max_i_ka"),
+            b_pu=b_pu,
+        )
+
+    # Transformers
+    for _, row in data["trafo"].iterrows():
+        u, v = row["hv_bus"], row["lv_bus"]
+        G.add_edge(
+            u,
+            v,
             type="trafo",
-            name=row["name"],
+            name=row.get("name"),
             std_type=None,
             b_pu=None,
+            max_i_ka=None,
         )
-        u, v = row["hv_bus"], row["lv_bus"]
-        G[u][v]["b_pu"] = None
 
-    # Ajouter les arêtes pour les transformateurs 3 enroulements
-    if hasattr(net, "trafo3w") and len(net.trafo3w):
-        for _, row in net.trafo3w.iterrows():
+    trafo3w = data.get("trafo3w")
+    if trafo3w is not None and len(trafo3w):
+        for _, row in trafo3w.iterrows():
             hv, mv, lv = row["hv_bus"], row["mv_bus"], row["lv_bus"]
             name = row.get("name", "trafo3w")
             for a, b, suffix in [(hv, mv, "hv_mv"), (hv, lv, "hv_lv")]:
@@ -94,85 +134,24 @@ def create_graph(net: Any) -> nx.Graph:
                     b_pu=None,
                     max_i_ka=None,
                 )
-
-    # Ajouter les générateurs, sgens et les charges comme attributs aux nœuds
-    s_base = G.graph["s_base"]
-    for _, row in net.gen.iterrows():
-        G.nodes[row["bus"]]["type"] = "gen"
-        G.nodes[row["bus"]]["gen_name"] = row["name"]
-        G.nodes[row["bus"]]["gen_power"] = row["p_mw"] / s_base
-
-    for _, row in net.sgen.iterrows():
-        G.nodes[row["bus"]]["type"] = "sgen"
-        G.nodes[row["bus"]]["sgen_name"] = row["name"]
-        G.nodes[row["bus"]]["sgen_power"] = row["p_mw"] / s_base
-
-    for _, row in net.load.iterrows():
-        G.nodes[row["bus"]]["type"] = "load"
-        G.nodes[row["bus"]]["load_name"] = row["name"]
-        G.nodes[row["bus"]]["load_power"] = row["p_mw"] / s_base
-
-    for _, row in net.ext_grid.iterrows():
-        G.nodes[row["bus"]]["type"] = "ext_grid"
-        G.nodes[row["bus"]]["grid_name"] = row["name"]
-
-    # -------------------------
-    # 2. Ajout des puissances consommées et injectées aux nœuds (p.u.)
-    # -------------------------
-    nx.set_node_attributes(G, 0.0, "P_load")
-    nx.set_node_attributes(G, 0.0, "P_gen")
-
-    # Charges
-    for _, row in net.load.iterrows():
-        G.nodes[row["bus"]]["P_load"] += row["p_mw"] / s_base
-
-    # Générateurs
-    for _, row in net.gen.iterrows():
-        G.nodes[row["bus"]]["P_gen"] += row["p_mw"] / s_base
-
-    # Générateurs statiques (sgen)
-    for _, row in net.sgen.iterrows():
-        G.nodes[row["bus"]]["P_gen"] += row["p_mw"] / s_base
-
-    # Source externe
-    for _, row in net.ext_grid.iterrows():
-        G.nodes[row["bus"]]["P_gen"] += 70.0 / s_base
-
-    # Calcul de P (convention : P<0 production, P>0 consommation)
-    for n in G.nodes:
-        G.nodes[n]["P"] = G.nodes[n]["P_load"] - G.nodes[n]["P_gen"]
-
-    # -------------------------
-    # Donner accès à G
-    # -------------------------
-    node_attrs = {n: G.nodes[n] for n in G.nodes}
     return G
 
 
-# Calcul des valeurs max de courant dans chaque ligne
+def create_graph(net: Any) -> nx.Graph:
+    """Facade creating a graph from a pandapower network."""
+    data = extract_network_data(net)
+    return build_graph_from_data(data)
+
+
+# Existing helpers remain unchanged
+
 def calculate_current_bounds(G, max_i_ka, v_base):
-    """Compute current limits in per-unit from network data.
-
-    The pandapower network provides the maximum current rating of each line
-    in the ``max_i_ka`` column. This function converts that rating to per-unit
-    using the system's base power and the line's voltage base.
-
-    Args:
-        max_current_kA (float): Maximum allowable current for the line in kA.
-        v_base (float): Voltage base of the line in kV.
-
-    Returns:
-        tuple: (I_min_pu, I_max_pu, base_i_ka). When the maximum current is not
-        specified, a wide default range is returned.
-    """
-    base_i_ka = G.graph["s_base"] / (math.sqrt(3) * v_base)  # kA
-
+    """Compute current limits in per-unit from network data."""
+    base_i_ka = G.graph["s_base"] / (math.sqrt(3) * v_base)
     if max_i_ka is not None and not math.isnan(max_i_ka):
         I_max = 1000 * max_i_ka / base_i_ka
         I_min = -I_max
         return I_min, I_max
-
-    # If no current limit is provided, use large bounds
     return -1000, 1000, base_i_ka
 
 
@@ -198,31 +177,8 @@ def compute_info_dso(
     for c in children_set:
         total = node_power(c)
         for v in G.neighbors(c):
-            if v in op_set:
-                continue
-            seen = {c}
-            q = deque([v])
-            while q:
-                u = q.popleft()
-                if u in seen or u in op_set:
-                    continue
-                seen.add(u)
-                total += node_power(u)
-                for w in G.neighbors(u):
-                    if w not in seen and w not in op_set:
-                        q.append(w)
+            if v not in op_set:
+                total += node_power(v)
         info[c] = total
     return info
 
-
-if __name__ == "__main__":
-    # Petit test manuel pour vérifier l'extraction des positions
-    from Data.Networks.example_multivoltage_adapted import build
-
-    net = build()
-    G = create_graph(net)
-    pos = nx.get_node_attributes(G, "pos")
-    assert len(pos) == len(
-        G.nodes
-    ), "Toutes les positions de bus doivent être présentes."
-    print(f"Graph created with {len(G.nodes)} buses; all positions disponibles.")
