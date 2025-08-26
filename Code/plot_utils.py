@@ -3,7 +3,10 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def plot_power_flow(m, G, i, j):
+    """Visualise power flows and nodal bounds for a given scenario."""
+
     pos = nx.get_node_attributes(G, 'pos')
     # Use node indices as labels
     labels = {}

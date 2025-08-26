@@ -1,6 +1,9 @@
 import pyomo.environ as pyo
 
+
 def apply(m, G):
+    """Apply standard OPF constraints and objective."""
+
     # 1) curtailment = P - E
     def curtailment_def_rule(m, n, vert_pow, vert_volt):
         return m.curt[n, vert_pow, vert_volt] == m.P[n] - m.E[n, vert_pow, vert_volt]

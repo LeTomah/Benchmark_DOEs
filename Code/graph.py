@@ -4,6 +4,7 @@ from collections import deque
 from typing import Any, Dict, Iterable, Set
 from Code.Data.bus_positions import extract_bus_positions
 
+
 def create_graph(net: Any) -> nx.Graph:
     """Create a NetworkX graph from a pandapower network.
 
@@ -136,6 +137,8 @@ def calculate_current_bounds(G, max_i_ka, v_base):
 # -------------------------
 
 def plot_network(G, labels=None, node_colors=None):
+    """Plot a networkx graph with node power information."""
+
     import networkx as nx, matplotlib.pyplot as plt
     pos = nx.get_node_attributes(G, 'pos')
 
@@ -179,13 +182,13 @@ def op_graph(full_graph: nx.DiGraph, operational_nodes: Set[int]) -> nx.DiGraph:
     """Return the subgraph induced by ``operational_nodes``."""
     return full_graph.subgraph(operational_nodes).copy()
 
-
 def compute_info_dso(
     G: nx.Graph,
     operational_nodes: Iterable[int],
     children_nodes: Iterable[int],
     p_attr: str = "P",
 ) -> Dict[int, float]:
+    """Estimate power contribution of each child node outside the operation area."""
     op_set: Set[int] = set(operational_nodes)
     children_set: Set[int] = set(children_nodes)
 

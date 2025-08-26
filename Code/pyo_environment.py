@@ -1,15 +1,41 @@
 # pyo_environment.py
+"""Pyomo model construction helpers."""
+
 from typing import Dict, Optional
+
 import pyomo.environ as pyo
+
 from graph import calculate_current_bounds
 
-def create_pyo_env(graph,
-               operational_nodes=None,
-               parent_nodes=None,
-               children_nodes=None,
-               info_DSO: Optional[Dict[int, float]] = None):
 
-#def create_pyo_environ(test_case, operational_nodes=None, parent_nodes=None, children_nodes=None):
+def create_pyo_env(
+    graph,
+    operational_nodes=None,
+    parent_nodes=None,
+    children_nodes=None,
+    info_DSO: Optional[Dict[int, float]] = None,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+):
+    """Create a Pyomo model from a networkx graph.
+
+    Parameters
+    ----------
+    graph:
+        NetworkX graph describing the electrical network.
+    operational_nodes:
+        Nodes kept in the operational sub-graph.
+    parent_nodes:
+        Boundary nodes injecting power into the operational area.
+    children_nodes:
+        Boundary nodes consuming power from the operational area.
+    info_DSO:
+        Mapping of child node to DSO power estimation.
+    alpha, beta:
+        Weights used in the objective function. They are defined here so the
+        user can tune them from the entry point of the application.
+    """
+
     # Charger le graphe complet
     G_full = graph
 
@@ -74,9 +100,9 @@ def create_pyo_env(graph,
     m.P_min = pyo.Param(initialize=-0.2)
     m.P_max = pyo.Param(initialize= 0.2)
     m.theta_min = pyo.Param(initialize=-180.0)
-    m.theta_max = pyo.Param(initialize= 180.0)
-    m.alpha = pyo.Param(initialize=1)
-    m.beta = pyo.Param(initialize=1)
+    m.theta_max = pyo.Param(initialize=180.0)
+    m.alpha = pyo.Param(initialize=alpha)
+    m.beta = pyo.Param(initialize=beta)
     m.I_min = pyo.Param(
         m.Lines,
         initialize={
