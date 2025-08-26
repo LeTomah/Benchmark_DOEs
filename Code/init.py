@@ -11,7 +11,6 @@ puis de lancer :  init.py
 from check_requirements import install_missing_packages
 from optimization import optim_problem
 from plot_utils import plot_power_flow, plot_alloc_alpha, plot_network
-import pandapower.networks as pn
 
 # ---- Paramétrage utilisateur ----
 TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_network(G, labels=None, node_colors=None):
+def plot_network(G, labels=None, node_colors=None, filename="Figures/Full_network.pdf"):
     """Plot a networkx graph with node power information."""
 
     pos = nx.get_node_attributes(G, 'pos')
@@ -42,10 +42,11 @@ def plot_network(G, labels=None, node_colors=None):
 
     plt.title("Réseau électrique avec puissances (P_net en p.u.)")
     plt.axis("equal")
+    plt.savefig(filename)
     plt.show()
 
 
-def plot_power_flow(m, G, i, j):
+def plot_power_flow(m, G, i, j, filename="Figures/Powerflow.pdf"):
     """Visualise power flows and nodal bounds for a given scenario."""
 
     pos = nx.get_node_attributes(G, 'pos')
@@ -119,6 +120,7 @@ def plot_power_flow(m, G, i, j):
 
     plt.title(f"Power Flow (per-unit) for i={i}, j={j}")
     plt.axis("equal")
+    plt.savefig(filename)
     plt.show()
 
 
