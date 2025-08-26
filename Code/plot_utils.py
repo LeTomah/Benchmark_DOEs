@@ -105,3 +105,53 @@ def plot_DOE(m, filename="child_nodes_envelopes.pdf"):
     plt.grid(True)
     plt.savefig(filename)
     plt.show()
+
+
+def plot_alloc_alpha(A, enveloppe_taille, curtail, close, somme_contributions,
+                     beta=None, filename="DOE_alloc_alpha.pdf"):
+    """Plot envelope volume, curtailment and DSO deviation versus alpha.
+
+    Parameters
+    ----------
+    A : Sequence[float]
+        Values of the parameter alpha.
+    enveloppe_taille, curtail, close, somme_contributions : Sequence[float]
+        Metrics to plot as a function of alpha. ``close`` represents the
+        deviation of the center of the envelope from the DSO estimation and
+        ``somme_contributions`` is the sum of this deviation and the envelope
+        volume.
+    beta : float, optional
+        If provided, displayed in the plot title.
+    filename : str, optional
+        PDF file name for saving the plot.
+    """
+
+    alpha_values = np.array(A)
+
+    enveloppe_taille_np = np.array(enveloppe_taille, dtype=float)
+    curtail_np = np.array(curtail, dtype=float)
+    close_np = np.array(close, dtype=float)
+    somme_contributions_np = np.array(somme_contributions, dtype=float)
+
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(alpha_values, enveloppe_taille_np, marker='o', linestyle='-',
+             label='Envelope Volume')
+    plt.plot(alpha_values, curtail_np, marker='x', linestyle='--',
+             label='Curtailment')
+    plt.plot(alpha_values, close_np, marker='s', linestyle='--', color='blue',
+             label='Deviation of the center of the envelope from DSO estimation')
+    plt.plot(alpha_values, somme_contributions_np, marker='^', linestyle=':',
+             color='red',
+             label='Deviation of the center of the envelope from DSO estimation + Envelope Volume')
+
+    plt.xlabel('$\\alpha$')
+    plt.ylabel('Power (per-unit)')
+    if beta is not None:
+        plt.title('Evolution of the volume of the envelope, curtailment and '
+                  'closeness to DSO estimation as a function of parameter '
+                  f'Alpha (beta={beta})')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(filename)
+    plt.show()

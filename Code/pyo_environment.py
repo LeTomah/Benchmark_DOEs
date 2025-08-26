@@ -54,9 +54,13 @@ def create_pyo_env(
     m.i = pyo.Set(initialize=[0, 1])  # Initialize m.i with two generic elements
     m.j = pyo.Set(initialize=[0, 1])
 
-    m.P = pyo.Param(m.Nodes,
-                    initialize={n: - G.nodes[n].get('P') for n in G.nodes},
-                    domain=pyo.Reals, mutable=True)
+    # Convention de signe : P < 0 production, P > 0 consommation
+    m.P = pyo.Param(
+        m.Nodes,
+        initialize={n: G.nodes[n].get('P') for n in G.nodes},
+        domain=pyo.Reals,
+        mutable=True,
+    )
 
     # --- Définir parents/enfants dynamiquement ---
     if parent_nodes is None:
