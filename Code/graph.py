@@ -149,7 +149,7 @@ def calculate_current_bounds(G, max_i_ka, v_base):
     """Compute current limits in per-unit from network data."""
     base_i_ka = G.graph["s_base"] / (math.sqrt(3) * v_base)
     if max_i_ka is not None and not math.isnan(max_i_ka):
-        I_max = 1000 * max_i_ka / base_i_ka
+        I_max = max_i_ka / base_i_ka
         I_min = -I_max
         return I_min, I_max
     return -1000, 1000, base_i_ka

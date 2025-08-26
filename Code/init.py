@@ -15,9 +15,9 @@ from plot_utils import plot_alloc_alpha, plot_network, plot_power_flow
 
 # ---- Paramétrage utilisateur ----
 TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"
-OPERATIONAL_NODES = []  # [] => OPF ; sinon => DOE
-PARENT_NODES = []
-CHILDREN_NODES = []
+OPERATIONAL_NODES = [7, 8, 9, 10, 11, 12, 13, 14]  # [] => OPF ; sinon => DOE
+PARENT_NODES = [7]
+CHILDREN_NODES = [8, 9, 10, 11, 12, 13, 14]
 # Parameters of the objective function
 ALPHA = 1
 BETA = 1
