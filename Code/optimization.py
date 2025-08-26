@@ -65,7 +65,8 @@ def optim_problem(
         )
         m, G = env_full
         copf.apply(m, G)
-        return {"full": _solve_and_pack(m, G, "objective_opf")}
+        res_full = _solve_and_pack(m, G, "objective_opf")
+        return {"full": res_full, "full_graph": full_graph}
 
     # 3) Cas DOE : operational_nodes non vide  →  DOE sur sous-graphe
     operational_nodes = list(operational_nodes or full_graph.nodes())
@@ -97,4 +98,4 @@ def optim_problem(
     result = _solve_and_pack(m, G, "objective_doe")
     if plot_doe:
         plot_DOE(m)
-    return {"operational": result}
+    return {"operational": result, "full_graph": full_graph}

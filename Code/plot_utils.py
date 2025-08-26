@@ -4,6 +4,47 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+def plot_network(G, labels=None, node_colors=None):
+    """Plot a networkx graph with node power information."""
+
+    pos = nx.get_node_attributes(G, 'pos')
+
+    # Couleurs des nœuds selon la puissance nette
+    node_colors = []
+    for n, data in G.nodes(data=True):
+        if data.get("P", 0) < 0:
+            node_colors.append("green")  # producteur
+        elif data.get("P", 0) > 0:
+            node_colors.append("red")  # consommateur
+        else:
+            node_colors.append("gray")  # neutre
+
+    # Labels avec nom et puissance nette
+    labels = {n: f"{data['label']}\nP={round(data.get('P', 0), 2)} p.u."
+              for n, data in G.nodes(data=True)}
+
+    plt.figure(figsize=(12, 8))
+
+    nx.draw(
+        G,
+        pos,
+        with_labels=True,
+        labels=labels,
+        node_size=1200,
+        node_color=node_colors,
+        edgecolors="black",
+        font_size=8,
+        alpha=0.85,
+    )
+
+    edge_labels = nx.get_edge_attributes(G, 'type')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=7)
+
+    plt.title("Réseau électrique avec puissances (P_net en p.u.)")
+    plt.axis("equal")
+    plt.show()
+
+
 def plot_power_flow(m, G, i, j):
     """Visualise power flows and nodal bounds for a given scenario."""
 
