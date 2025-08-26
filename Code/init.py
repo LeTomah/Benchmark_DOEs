@@ -10,7 +10,7 @@ puis de lancer :  init.py
 """
 from check_requirements import install_missing_packages
 from optimization import optim_problem
-from plot_utils import plot_power_flow, plot_alloc_alpha
+from plot_utils import plot_power_flow, plot_alloc_alpha, plot_network
 import pandapower.networks as pn
 
 # ---- Paramétrage utilisateur ----
@@ -56,8 +56,11 @@ res = optim_problem(
     beta=BETA,
 )
 
-# Plot selon le cas
+# Always display the complete graph
+plot_network(res["full_graph"])
+
+# Display power flows for available models
 if "full" in res:
     plot_power_flow(res["full"]["model"], res["full"]["graph"], 0, 1)
-elif "operational" in res:
+if "operational" in res:
     plot_power_flow(res["operational"]["model"], res["operational"]["graph"], 0, 1)
