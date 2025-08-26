@@ -1,8 +1,8 @@
+import json
 import math
 import networkx as nx
 from collections import deque
 from typing import Any, Dict, Iterable, Set
-from Code.Data.bus_positions import extract_bus_positions
 
 
 def create_graph(net: Any) -> nx.Graph:
@@ -15,7 +15,23 @@ def create_graph(net: Any) -> nx.Graph:
     """
     G = nx.Graph()
 
-    pos = extract_bus_positions(net)
+    if "geo" in net.bus.columns:
+        pos: Dict[int, tuple] = {}
+        for idx, geo in net.bus["geo"].items():
+            try:
+                if isinstance(geo, str):
+                    geo = json.loads(geo)
+                coords = geo.get("coordinates") if isinstance(geo, dict) else None
+                if isinstance(coords, (list, tuple)) and len(coords) == 2:
+                    pos[idx] = (float(coords[0]), float(coords[1]))
+            except Exception:
+                continue
+        if len(pos) != len(net.bus):
+            raise ValueError("Impossible de déterminer des coordonnées pour tous les bus.")
+    elif hasattr(net, "bus_geodata"):
+        pos = {idx: (float(row["x"]), float(row["y"])) for idx, row in net.bus_geodata.iterrows()}
+    else:
+        raise AttributeError("Bus positions not available in network.")
 
     G.graph["s_base"] = 100  # MVA base for per-unit calculations
 
@@ -217,10 +233,10 @@ def compute_info_dso(
 
 if __name__ == "__main__":
     # Petit test manuel pour vérifier l'extraction des positions
-    import pandapower.networks as pn
+    from Data.Networks.example_multivoltage_adapted import build
 
-    net = pn.example_multivoltage()
+    net = build()
     G = create_graph(net)
     pos = nx.get_node_attributes(G, "pos")
     assert len(pos) == len(G.nodes), "Toutes les positions de bus doivent être présentes."
-    print(f"Graph created with {len(G.nodes)} buses; all positions available.")
+    print(f"Graph created with {len(G.nodes)} buses; all positions disponibles.")
