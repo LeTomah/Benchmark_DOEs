@@ -81,7 +81,7 @@ def plot_power_flow(m, G, i, j):
     plt.show()
 
 
-def plot_DOE(m, filename="child_nodes_envelopes.pdf"):
+def plot_DOE(m, filename="Figures/Child_nodes_envelopes.pdf"):
     """Plot power envelope and DSO estimation for child nodes."""
     children = list(m.children)
     p0 = [getattr(m.P_C_set[n, 0], "value", m.P_C_set[n, 0]) for n in children]
@@ -117,7 +117,7 @@ def plot_alloc_alpha(
     alpha_max: float = 1.0,
     alpha_step: float = 0.1,
     show: bool = True,
-    filename: str = "DOE_alloc_alpha.pdf",
+    filename: str = "Figures/DOE_alloc_alpha.pdf",
 ):
     """Run the optimisation for several ``alpha`` values and optionally plot the
     evolution of key metrics.

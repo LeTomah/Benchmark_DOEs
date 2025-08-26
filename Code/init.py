@@ -25,7 +25,7 @@ BETA = 1
 # Optional sweep of alpha to visualise its impact on the optimisation.
 # Set ``PLOT_ALPHA`` to ``True`` to launch :func:`plot_alloc_alpha` with the
 # following bounds and step.
-PLOT_ALPHA = False
+PLOT_ALPHA = True
 ALPHA_MIN = 0.0
 ALPHA_MAX = 1.0
 ALPHA_STEP = 0.1
