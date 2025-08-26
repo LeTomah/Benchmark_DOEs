@@ -1,12 +1,11 @@
-import constraints_doe as cdoe
-import constraints_opf as copf
-import graph
 import gurobipy as gp
-import pyo_environment
 import pyomo.environ as pyo
+
 from Data.gurobi_config import get_wls_params
-from loader import load_network
-from plot_utils import plot_DOE
+from viz.plot_DOE import plot_DOE
+
+from . import constraints_doe as cdoe, constraints_opf as copf, graph, pyo_environment
+from .loader import load_network
 
 
 def _build_gurobi_solver():

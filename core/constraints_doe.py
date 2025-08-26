@@ -1,10 +1,11 @@
 """DOE-specific constraints and objective."""
 
 import pyomo.environ as pyo
-from constraints_common import (
-    add_curtailment_abs,
+
+from .constraints_common import (
     add_current_bounds,
     add_current_definition,
+    add_curtailment_abs,
     add_dc_flow_constraints,
     add_parent_power_bounds,
     add_phase_bounds,

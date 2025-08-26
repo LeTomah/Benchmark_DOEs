@@ -1,7 +1,7 @@
 """Lightweight dependency checker."""
 
-from pathlib import Path
 from importlib import import_module
+from pathlib import Path
 
 
 def check_packages(requirements_file: str = "Data/requirements.txt", show_versions: bool = False) -> None:

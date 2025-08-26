@@ -10,8 +10,10 @@ puis de lancer :  init.py
 """
 
 from check_requirements import check_packages
-from optimization import optim_problem
-from plot_utils import plot_alloc_alpha, plot_network, plot_power_flow
+from core.optimization import optim_problem
+from viz.plot_alloc_alpha import plot_alloc_alpha
+from viz.plot_network import plot_network
+from viz.plot_powerflow import plot_power_flow
 
 # ---- Paramétrage utilisateur ----
 TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"

@@ -9,5 +9,5 @@ select = ["E", "F", "I"]   # Erreurs classiques + imports
 ignore = ["E501"]          # On laisse black gérer la longueur des lignes
 
 [tool.ruff.lint.isort]
-known-first-party = ["Code"]  # adapte avec le nom de ton package
+known-first-party = ["core", "viz"]  # project packages
 combine-as-imports = true
