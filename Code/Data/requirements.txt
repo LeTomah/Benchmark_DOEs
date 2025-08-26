@@ -3,3 +3,6 @@ matplotlib
 networkx
 pyomo
 gurobipy
+numpy
+pandas
+shapely
