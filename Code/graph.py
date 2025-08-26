@@ -97,9 +97,9 @@ def create_graph(net: Any) -> nx.Graph:
     for _, row in net.ext_grid.iterrows():
         G.nodes[row["bus"]]["P_gen"] += 70.0 / s_base
 
-    # Calcul de P
+    # Calcul de P (convention : P<0 production, P>0 consommation)
     for n in G.nodes:
-        G.nodes[n]["P"] = G.nodes[n]["P_gen"] - G.nodes[n]["P_load"]
+        G.nodes[n]["P"] = G.nodes[n]["P_load"] - G.nodes[n]["P_gen"]
 
     # -------------------------
     # Donner accès à G
@@ -147,9 +147,9 @@ def plot_network(G, labels=None, node_colors=None):
     # -------------------------
     node_colors = []
     for n, data in G.nodes(data=True):
-        if data["P"] > 0:
+        if data["P"] < 0:
             node_colors.append("green")  # producteur
-        elif data["P"] < 0:
+        elif data["P"] > 0:
             node_colors.append("red")  # consommateur
         else:
             node_colors.append("gray")  # neutre
