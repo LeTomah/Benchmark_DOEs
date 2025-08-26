@@ -6,11 +6,12 @@ The network graph is undirected but edges have a single canonical
 orientation given by the tuple order (u, v).
 """
 
-from typing import Dict, Optional
 import math
+from typing import Dict, Optional
 
 import pyomo.environ as pyo
-from graph import calculate_current_bounds
+
+from .graph import calculate_current_bounds
 
 
 def build_sets(m, G, parent_nodes, children_nodes):
