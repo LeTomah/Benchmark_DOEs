@@ -9,15 +9,15 @@ Et de renseigner ses identifiants gurobi dans optimization.py (l.131->133)
 puis de lancer :  init.py
 """
 
-from check_requirements import install_missing_packages
+from check_requirements import check_packages
 from optimization import optim_problem
 from plot_utils import plot_alloc_alpha, plot_network, plot_power_flow
 
 # ---- Paramétrage utilisateur ----
 TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"
-OPERATIONAL_NODES = []  # [] => OPF ; sinon => DOE
-PARENT_NODES = []
-CHILDREN_NODES = []
+OPERATIONAL_NODES = [7, 8, 9, 10, 11, 12, 13, 14]  # [] => OPF ; sinon => DOE
+PARENT_NODES = [7]
+CHILDREN_NODES = [8, 9, 10, 11, 12, 13, 14]
 # Parameters of the objective function
 ALPHA = 1
 BETA = 1
@@ -31,7 +31,10 @@ ALPHA_MAX = 4.0
 ALPHA_STEP = 0.1
 # ---------------------------------
 
-install_missing_packages()
+
+CHECK_REQ = False
+if CHECK_REQ:
+    check_packages()
 
 # Optionally scan multiple ``alpha`` values and display the resulting metrics
 # before running the main optimisation.

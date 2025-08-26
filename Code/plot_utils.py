@@ -76,16 +76,14 @@ def plot_power_flow(m, G, i, j, filename="Figures/Powerflow.pdf"):
     pos = nx.get_node_attributes(G, "pos")
     # Use node indices as labels
     labels = {}
-    label_colors = (
-        []
-    )  # This is for node colors, will remove this later if needed or set to default
+    node_colors = []  # This is for node colors, will remove this later if needed or set to default
     for n in G.nodes():
         label_text = f"{n}"
         if n in m.parents:
             # Display parent bounds using the global P_min and P_max parameters
             label_text += f"\n[{m.P_min.value}, {m.P_max.value}]"
             # No specific color for label text here, use default
-            label_colors.append(
+            node_colors.append(
                 "steelblue"
             )  # Default node color based on previous plots
         elif n in m.children:
@@ -95,9 +93,9 @@ def plot_power_flow(m, G, i, j, filename="Figures/Powerflow.pdf"):
                 f"\n[{round(min(p_c_values), 4)}, {round(max(p_c_values), 4)}]"
             )
             # We will try to color this text red when drawing labels
-            label_colors.append("steelblue")  # Default node color
+            node_colors.append("steelblue")  # Default node color
         else:
-            label_colors.append("steelblue")  # Default node color
+            node_colors.append("steelblue")  # Default node color
         labels[n] = label_text
 
     plt.figure(figsize=(12, 8))
@@ -106,25 +104,20 @@ def plot_power_flow(m, G, i, j, filename="Figures/Powerflow.pdf"):
     edge_labels = {}
 
     for u, v in G.edges():
-        try:
-            # Correct the sign of the flow value for plotting
+        flow_value = None
+        if (u, v) in m.Lines:
             flow_value = m.F[u, v, i, j].value
-            if flow_value is not None:
-                edge_labels[(u, v)] = f"{round(flow_value, 4)}"
-                if flow_value > 0:
-                    edge_colors.append(
-                        "blue"
-                    )  # Positive flow (now correctly represents flow from u to v)
-                elif flow_value < 0:
-                    edge_colors.append(
-                        "red"
-                    )  # Negative (reverse) flow (now correctly represents flow from v to u)
-                else:
-                    edge_colors.append("gray")  # No flow
-            else:
-                edge_colors.append("gray")  # No flow value
-        except:
-            edge_colors.append("gray")  # Handle cases where edge might not be in m.F
+        elif (v, u) in m.Lines:
+            flow_value = -m.F[v, u, i, j].value
+        if flow_value is None:
+            raise KeyError(f"Missing flow for edge ({u}, {v})")
+        edge_labels[(u, v)] = f"{round(flow_value, 4)}"
+        if flow_value > 0:
+            edge_colors.append("blue")
+        elif flow_value < 0:
+            edge_colors.append("red")
+        else:
+            edge_colors.append("gray")
 
     # Draw the network
     nx.draw(
@@ -136,7 +129,7 @@ def plot_power_flow(m, G, i, j, filename="Figures/Powerflow.pdf"):
         edgecolors="black",
         font_size=8,
         alpha=0.85,
-        node_color=label_colors,  # Apply node colors
+        node_color=node_colors,  # Apply node colors
     )
 
     # Draw labels with different colors
@@ -160,7 +153,7 @@ def plot_power_flow(m, G, i, j, filename="Figures/Powerflow.pdf"):
         G, pos, edge_labels=edge_labels, font_size=7, label_pos=0.3
     )
 
-    plt.title(f"Power Flow (per-unit) for i={i}, j={j}")
+    plt.title(f"Power Flow [p.u.] for i={i}, j={j}")
     plt.axis("equal")
     plt.savefig(filename)
     plt.show()
@@ -192,7 +185,7 @@ def plot_DOE(m, filename="Figures/Child_nodes_envelopes.pdf"):
     )
     plt.xticks(x, children)
     plt.xlabel("Child Node Index")
-    plt.ylabel("Power (in per-unit)")
+    plt.ylabel("Power [p.u.]")
     plt.legend(loc="upper left")
     plt.grid(True)
     plt.savefig(filename)
@@ -263,9 +256,9 @@ def plot_alloc_alpha(
         )["operational"]
         m = res["model"]
         # Extract the relevant metrics from the solved model
-        envelope.append(float(m.tot_P.value))
-        curtail.append(float(m.O.value))
-        deviation.append(float(m.tot_diff_DSO.value))
+        envelope.append(float(m.envelope_volume.value))
+        curtail.append(float(m.curtailment_budget.value))
+        deviation.append(float(m.envelope_center_gap.value))
         total.append(curtail[-1] + deviation[-1])
 
     if show:
@@ -291,7 +284,7 @@ def plot_alloc_alpha(
             label="Deviation of the center of the envelope from DSO estimation + Envelope Volume",
         )
         plt.xlabel("$\\alpha$")
-        plt.ylabel("Power (per-unit)")
+        plt.ylabel("Power [p.u.]")
         plt.title(
             "Evolution of the volume of the envelope, curtailment and closeness to DSO estimation as a function of parameter Alpha (beta={})".format(
                 beta

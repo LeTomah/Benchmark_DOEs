@@ -1,4 +1,4 @@
-import constraints
+import constraints_doe as cdoe
 import constraints_opf as copf
 import graph
 import gurobipy as gp
@@ -94,7 +94,7 @@ def optim_problem(
         beta=beta,
     )
     m, G = env_op
-    constraints.constraints(m, G)  # crée m.objective_doe
+    cdoe.apply(m, G)  # crée m.objective_doe
     result = _solve_and_pack(m, G, "objective_doe")
     if plot_doe:
         plot_DOE(m)

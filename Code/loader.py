@@ -1,3 +1,5 @@
+"""Déprécié : préférez passer un pandapowerNet directement à optim_problem."""
+
 def load_network(test_case):
     """Load a test network from a Python script returning a pandapowerNet.
 
