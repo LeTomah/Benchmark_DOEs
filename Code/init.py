@@ -18,6 +18,9 @@ TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"
 OPERATIONAL_NODES = [0, 1, 2, 3, 4, 5]            # [] => OPF ; sinon => DOE
 PARENT_NODES      = [0]
 CHILDREN_NODES    = [1, 2, 3, 4, 5]
+# Parameters of the objective function
+ALPHA = 1
+BETA = 1
 # ---------------------------------
 
 install_missing_packages()
@@ -27,6 +30,8 @@ res = optim_problem(
     operational_nodes=OPERATIONAL_NODES,
     parent_nodes=PARENT_NODES,
     children_nodes=CHILDREN_NODES,
+    alpha=ALPHA,
+    beta=BETA,
 )
 
 # Plot selon le cas

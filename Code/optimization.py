@@ -10,11 +10,13 @@ from plot_utils import plot_DOE
 
 
 def _build_gurobi_solver():
+    """Configure and return a Gurobi solver for Pyomo."""
     env = gp.Env(params=get_wls_params())
-    return pyo.SolverFactory('gurobi', env=env)
+    return pyo.SolverFactory("gurobi", env=env)
 
 
 def _solve_and_pack(m, G, objective_name: str):
+    """Solve a model and return a small result dictionary."""
     solver = _build_gurobi_solver()
     results = solver.solve(m, tee=True)
     status = str(results.solver.status)
@@ -22,10 +24,26 @@ def _solve_and_pack(m, G, objective_name: str):
     return {"status": status, "objective": obj, "model": m, "graph": G}
 
 
-def optim_problem(test_case,
-                  operational_nodes=None,
-                  parent_nodes=None,
-                  children_nodes=None):
+def optim_problem(
+    test_case,
+    operational_nodes=None,
+    parent_nodes=None,
+    children_nodes=None,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+):
+    """Run either an OPF or DOE optimisation on the given network.
+
+    Parameters
+    ----------
+    test_case: str or pandapowerNet
+        Network description to load.
+    operational_nodes, parent_nodes, children_nodes: iterable
+        Definition of the operational perimeter and boundary nodes.
+    alpha, beta: float
+        Weights used in the objective function of the DOE optimisation.
+    """
+
     # 1) Charger le réseau et créer le graphe complet
     net = load_network(test_case)
     full_graph = graph.create_graph(net)
@@ -36,7 +54,9 @@ def optim_problem(test_case,
             graph=full_graph,
             parent_nodes=parent_nodes,
             children_nodes=children_nodes,
-            info_DSO=None
+            info_DSO=None,
+            alpha=alpha,
+            beta=beta,
         )
         m, G = env_full
         copf.apply(m, G)
@@ -63,7 +83,9 @@ def optim_problem(test_case,
         operational_nodes=list(op_graph.nodes()),
         parent_nodes=parents_op,
         children_nodes=children_op,
-        info_DSO=info_DSO
+        info_DSO=info_DSO,
+        alpha=alpha,
+        beta=beta,
     )
     m, G = env_op
     constraints.constraints(m, G)  # crée m.objective_doe

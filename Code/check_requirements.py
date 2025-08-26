@@ -2,6 +2,8 @@ from pathlib import Path
 
 
 def install_missing_packages(requirements_file: str = "Data/requirements.txt") -> None:
+    """Install any package listed in ``requirements_file`` that is missing."""
+
     import importlib.util
     import subprocess
     import sys

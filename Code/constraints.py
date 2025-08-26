@@ -1,8 +1,19 @@
 import pyomo.environ as pyo
 
-def constraints(m, G):
 
-#Consommation aux noeuds enfants
+def constraints(m, G):
+    """Apply DOE constraints and objective to the model.
+
+    Parameters
+    ----------
+    m : ConcreteModel
+        Pyomo model to which the constraints are added.
+    G : networkx.Graph
+        Graph describing the electrical network, mainly used for DC power flow
+        parameters.
+    """
+
+    #Consommation aux noeuds enfants
     # info_DSO_node1 = m.F[1, 3, 0, 0].value
     # info_DSO_node2 = m.F[2, 4, 0, 0].value
     # print("info_DSO_1: ", info_DSO_node1)
