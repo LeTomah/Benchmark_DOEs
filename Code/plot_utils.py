@@ -4,8 +4,29 @@ import networkx as nx
 import numpy as np
 
 
-def plot_network(G, labels=None, node_colors=None, filename="Figures/Full_network.pdf"):
-    """Plot a networkx graph with node power information."""
+def plot_network(
+    G,
+    labels=None,
+    node_colors=None,
+    filename="Figures/Full_network.pdf",
+    dpi: int = 300,
+):
+    """Plot a networkx graph with node power information.
+
+    Parameters
+    ----------
+    G : networkx.Graph
+        Graph to plot. Nodes are expected to contain ``P`` (net power)
+        attributes and ``pos`` (position) for layout.
+    labels : dict, optional
+        Unused, maintained for backward compatibility.
+    node_colors : list, optional
+        Unused, maintained for backward compatibility.
+    filename : str, optional
+        Path where the figure will be saved.
+    dpi : int, optional
+        Resolution of the generated figure.
+    """
 
     pos = nx.get_node_attributes(G, "pos")
 
@@ -19,13 +40,13 @@ def plot_network(G, labels=None, node_colors=None, filename="Figures/Full_networ
         else:
             node_colors.append("gray")  # neutre
 
-    # Labels avec nom et puissance nette
+    # Labels with numerical index and net power
     labels = {
-        n: f"{data['label']}\nP={round(data.get('P', 0), 2)} p.u."
+        n: f"{n}\nP={round(data.get('P', 0), 2)} p.u."
         for n, data in G.nodes(data=True)
     }
 
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(12, 8), dpi=dpi)
 
     nx.draw(
         G,
@@ -44,7 +65,8 @@ def plot_network(G, labels=None, node_colors=None, filename="Figures/Full_networ
 
     plt.title("Réseau électrique avec puissances (P_net en p.u.)")
     plt.axis("equal")
-    plt.savefig(filename)
+    plt.tight_layout()
+    plt.savefig(filename, dpi=dpi)
     plt.show()
 
 
