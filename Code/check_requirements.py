@@ -11,7 +11,9 @@ def install_missing_packages(requirements_file: str = "Data/requirements.txt") -
     requirements_path = Path(__file__).parent / requirements_file
 
     with open(requirements_path, "r") as file:
-        packages = [line.strip() for line in file if line.strip() and not line.startswith("#")]
+        packages = [
+            line.strip() for line in file if line.strip() and not line.startswith("#")
+        ]
 
     for package in packages:
         if importlib.util.find_spec(package) is None:

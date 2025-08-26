@@ -4,7 +4,6 @@
 from typing import Dict, Optional
 
 import pyomo.environ as pyo
-
 from graph import calculate_current_bounds
 
 
@@ -57,7 +56,7 @@ def create_pyo_env(
     # Convention de signe : P < 0 production, P > 0 consommation
     m.P = pyo.Param(
         m.Nodes,
-        initialize={n: G.nodes[n].get('P') for n in G.nodes},
+        initialize={n: G.nodes[n].get("P") for n in G.nodes},
         domain=pyo.Reals,
         mutable=True,
     )
@@ -75,34 +74,46 @@ def create_pyo_env(
     m.NegativeNodes = pyo.Set(initialize=[n for n in m.Nodes if pyo.value(m.P[n]) <= 0])
 
     # Variables principales
-    m.F = pyo.Var(m.Lines, m.i, m.j, domain=pyo.Reals)  # active power flow through lines
+    m.F = pyo.Var(
+        m.Lines, m.i, m.j, domain=pyo.Reals
+    )  # active power flow through lines
     m.I = pyo.Var(m.Lines, m.i, m.j, domain=pyo.Reals)  # current flowing through lines
     m.theta = pyo.Var(m.Nodes, m.i, m.j, domain=pyo.Reals)  # phase angle of the voltage
-    m.V = pyo.Var(m.Nodes, m.i, m.j, domain=pyo.NonNegativeReals)  # voltage magnitude at each node
-    m.E = pyo.Var(m.Nodes, m.i, m.j, domain=pyo.Reals)  # net power injection/consumption
-    m.P_plus = pyo.Var(m.parents, m.i, m.j, domain=pyo.Reals)  # power entering the operational graph
-    m.P_minus = pyo.Var(m.children, m.i, m.j, domain=pyo.Reals)  # power leaving the operational graph
-    m.P_C_set = pyo.Var(m.children, m.i, domain=pyo.Reals)  # vertices of the power envelope at each child node
+    m.V = pyo.Var(
+        m.Nodes, m.i, m.j, domain=pyo.NonNegativeReals
+    )  # voltage magnitude at each node
+    m.E = pyo.Var(
+        m.Nodes, m.i, m.j, domain=pyo.Reals
+    )  # net power injection/consumption
+    m.P_plus = pyo.Var(
+        m.parents, m.i, m.j, domain=pyo.Reals
+    )  # power entering the operational graph
+    m.P_minus = pyo.Var(
+        m.children, m.i, m.j, domain=pyo.Reals
+    )  # power leaving the operational graph
+    m.P_C_set = pyo.Var(
+        m.children, m.i, domain=pyo.Reals
+    )  # vertices of the power envelope at each child node
     m.z = pyo.Var(m.Nodes, m.i, m.j, domain=pyo.NonNegativeReals)
     m.curt = pyo.Var(m.Nodes, m.i, m.j, domain=pyo.Reals)
     m.aux = pyo.Var(m.children, domain=pyo.Reals)
-    m.tot_P = pyo.Var(domain= pyo.Reals)
+    m.tot_P = pyo.Var(domain=pyo.Reals)
     m.O = pyo.Var(domain=pyo.NonNegativeReals)
     m.diff_DSO = pyo.Var(m.children, domain=pyo.NonNegativeReals)
 
-    #Paramètres du modèle
+    # Paramètres du modèle
     info_DSO = info_DSO or {}
     m.info_DSO_param = pyo.Param(
         m.children,
         initialize={n: float(info_DSO.get(n, 0.0)) for n in m.children},
-        domain=pyo.Reals
+        domain=pyo.Reals,
     )
     # Constant definition
-    m.V_min = pyo.Param(initialize= 0.9)
-    m.V_max = pyo.Param(initialize= 1.1)
+    m.V_min = pyo.Param(initialize=0.9)
+    m.V_max = pyo.Param(initialize=1.1)
     m.V_P = pyo.Param(m.j, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
     m.P_min = pyo.Param(initialize=-0.2)
-    m.P_max = pyo.Param(initialize= 0.2)
+    m.P_max = pyo.Param(initialize=0.2)
     m.theta_min = pyo.Param(initialize=-180.0)
     m.theta_max = pyo.Param(initialize=180.0)
     m.alpha = pyo.Param(initialize=alpha)
@@ -132,11 +143,11 @@ def create_pyo_env(
         domain=pyo.Reals,
     )
 
-
     # Les puissances sont déjà stockées en per unit dans le graphe
 
     # Donner accès à m :
     return m, G
+
 
 if __name__ == "__main__":
     create_pyo_env("Data/Networks/network_test.py")

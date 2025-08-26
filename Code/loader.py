@@ -12,9 +12,10 @@ def load_network(test_case):
         The loaded network.
     """
 
-    import os
     import importlib.util
     import inspect
+    import os
+
     import pandapower as pp
 
     # 1) Already a pandapower network?
@@ -66,4 +67,3 @@ def load_network(test_case):
 
 if __name__ == "__main__":
     load_network("Data/Networks/network_test.py")
-

@@ -1,12 +1,15 @@
+import json
+
 import pandapower.plotting as plot
-import json, pandas as pd, shapely.geometry as geom
+import pandas as pd
+import shapely.geometry as geom
 
 
 def import_ieee_txt_to_pandapower(filename):
+    import pandapower as pp
+    import pandas as pd
     from pandapower.plotting import create_generic_coordinates
     from pandapower.plotting.geo import convert_geodata_to_geojson
-    import pandas as pd
-    import pandapower as pp
 
     net = pp.create_empty_network()
     with open(filename, "r") as f:
@@ -57,10 +60,14 @@ def import_ieee_txt_to_pandapower(filename):
             pp.create_ext_grid(net, bus=bus_map[idx], vm_pu=vm_pu)
         # PV (gen) buses
         if p_gen != 0 and idx != 1:
-            pp.create_gen(net, bus=bus_map[idx], p_mw=p_gen, vm_pu=vm_pu, name=f"Gen_{idx}")
+            pp.create_gen(
+                net, bus=bus_map[idx], p_mw=p_gen, vm_pu=vm_pu, name=f"Gen_{idx}"
+            )
         # Loads
         if p_load != 0 or q_load != 0:
-            pp.create_load(net, bus=bus_map[idx], p_mw=p_load, q_mvar=q_load, name=f"Load_{idx}")
+            pp.create_load(
+                net, bus=bus_map[idx], p_mw=p_load, q_mvar=q_load, name=f"Load_{idx}"
+            )
 
     # 3. Lignes (ou trafo si tu veux détecter le type)
     for row in branch_data:
@@ -71,10 +78,17 @@ def import_ieee_txt_to_pandapower(filename):
         x = float(data[7])
         b = float(data[8])
         # Génère une ligne fictive de 1km
-        pp.create_line_from_parameters(net, from_bus=bus_map[from_bus], to_bus=bus_map[to_bus],
-                                       length_km=1.0, r_ohm_per_km=r, x_ohm_per_km=x,
-                                       c_nf_per_km=0, max_i_ka=1.0, name=f"Line_{from_bus}_{to_bus}"
-                                       )
+        pp.create_line_from_parameters(
+            net,
+            from_bus=bus_map[from_bus],
+            to_bus=bus_map[to_bus],
+            length_km=1.0,
+            r_ohm_per_km=r,
+            x_ohm_per_km=x,
+            c_nf_per_km=0,
+            max_i_ka=1.0,
+            name=f"Line_{from_bus}_{to_bus}",
+        )
 
     # 4. Générer les coordonnées et les convertir au format moderne
     # a) S'assurer que la table existe
@@ -90,7 +104,7 @@ def import_ieee_txt_to_pandapower(filename):
 
 
 if __name__ == "__main__":
-    net = import_ieee_txt_to_pandapower('Case_14.txt')
+    net = import_ieee_txt_to_pandapower("Case_14.txt")
 
     plot.simple_plot(net)
 

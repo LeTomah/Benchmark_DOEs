@@ -1,11 +1,11 @@
-import graph
-import pyo_environment
-import pyomo.environ as pyo
-import gurobipy as gp
-from loader import load_network
 import constraints
 import constraints_opf as copf
+import graph
+import gurobipy as gp
+import pyo_environment
+import pyomo.environ as pyo
 from Data.gurobi_config import get_wls_params
+from loader import load_network
 from plot_utils import plot_DOE
 
 
@@ -73,7 +73,7 @@ def optim_problem(
     op_graph = graph.op_graph(full_graph, set(operational_nodes))
 
     # restreindre parents/enfants au sous-graphe
-    parents_op  = list(set(parent_nodes or []) & set(op_graph.nodes()))
+    parents_op = list(set(parent_nodes or []) & set(op_graph.nodes()))
     children_op = list(set(children_nodes or []) & set(op_graph.nodes()))
 
     # calcul info_DSO depuis le graphe complet (hors périmètre)

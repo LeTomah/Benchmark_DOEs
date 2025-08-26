@@ -15,7 +15,7 @@ environment. This keeps configuration lightweight and flexible.
 from __future__ import annotations
 
 import os
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 def get_wls_params() -> Dict[str, Any]:

@@ -1,0 +1,13 @@
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+select = ["E", "F", "I"]   # Erreurs classiques + imports
+ignore = ["E501"]          # On laisse black gérer la longueur des lignes
+
+[tool.ruff.lint.isort]
+known-first-party = ["Code"]  # adapte avec le nom de ton package
+combine-as-imports = true

@@ -1,8 +1,9 @@
 import json
 import math
-import networkx as nx
 from collections import deque
 from typing import Any, Dict, Iterable, Set
+
+import networkx as nx
 
 
 def create_graph(net: Any) -> nx.Graph:
@@ -27,9 +28,14 @@ def create_graph(net: Any) -> nx.Graph:
             except Exception:
                 continue
         if len(pos) != len(net.bus):
-            raise ValueError("Impossible de déterminer des coordonnées pour tous les bus.")
+            raise ValueError(
+                "Impossible de déterminer des coordonnées pour tous les bus."
+            )
     elif hasattr(net, "bus_geodata"):
-        pos = {idx: (float(row["x"]), float(row["y"])) for idx, row in net.bus_geodata.iterrows()}
+        pos = {
+            idx: (float(row["x"]), float(row["y"]))
+            for idx, row in net.bus_geodata.iterrows()
+        }
     else:
         raise AttributeError("Bus positions not available in network.")
 
@@ -58,15 +64,18 @@ def create_graph(net: Any) -> nx.Graph:
         )
         u, v = row["from_bus"], row["to_bus"]
         V_kv = G.nodes[u]["vn_kv"]
-        G[u][v]["b_pu"] = (V_kv ** 2) / (G[u][v]["x_ohm"] * G.graph["s_base"])
+        G[u][v]["b_pu"] = (V_kv**2) / (G[u][v]["x_ohm"] * G.graph["s_base"])
 
     # Ajouter les arêtes pour les transformateurs
     for _, row in net.trafo.iterrows():
-        G.add_edge(row["hv_bus"], row["lv_bus"],
-                   type="trafo",
-                   name=row["name"],
-                   std_type = None,
-                   b_pu = None)
+        G.add_edge(
+            row["hv_bus"],
+            row["lv_bus"],
+            type="trafo",
+            name=row["name"],
+            std_type=None,
+            b_pu=None,
+        )
         u, v = row["hv_bus"], row["lv_bus"]
         G[u][v]["b_pu"] = None
 
@@ -76,12 +85,15 @@ def create_graph(net: Any) -> nx.Graph:
             hv, mv, lv = row["hv_bus"], row["mv_bus"], row["lv_bus"]
             name = row.get("name", "trafo3w")
             for a, b, suffix in [(hv, mv, "hv_mv"), (hv, lv, "hv_lv")]:
-                G.add_edge(a, b,
-                           type="trafo3w",
-                           name=f"{name}_{suffix}",
-                           std_type=None,
-                           b_pu=None,
-                           max_i_ka=None)
+                G.add_edge(
+                    a,
+                    b,
+                    type="trafo3w",
+                    name=f"{name}_{suffix}",
+                    std_type=None,
+                    b_pu=None,
+                    max_i_ka=None,
+                )
 
     # Ajouter les générateurs, sgens et les charges comme attributs aux nœuds
     s_base = G.graph["s_base"]
@@ -107,8 +119,8 @@ def create_graph(net: Any) -> nx.Graph:
     # -------------------------
     # 2. Ajout des puissances consommées et injectées aux nœuds (p.u.)
     # -------------------------
-    nx.set_node_attributes(G, 0.0, 'P_load')
-    nx.set_node_attributes(G, 0.0, 'P_gen')
+    nx.set_node_attributes(G, 0.0, "P_load")
+    nx.set_node_attributes(G, 0.0, "P_gen")
 
     # Charges
     for _, row in net.load.iterrows():
@@ -136,7 +148,8 @@ def create_graph(net: Any) -> nx.Graph:
     node_attrs = {n: G.nodes[n] for n in G.nodes}
     return G
 
-#Calcul des valeurs max de courant dans chaque ligne
+
+# Calcul des valeurs max de courant dans chaque ligne
 def calculate_current_bounds(G, max_i_ka, v_base):
     """Compute current limits in per-unit from network data.
 
@@ -155,15 +168,18 @@ def calculate_current_bounds(G, max_i_ka, v_base):
     base_i_ka = G.graph["s_base"] / (math.sqrt(3) * v_base)  # kA
 
     if max_i_ka is not None and not math.isnan(max_i_ka):
-        I_max = max_i_ka / base_i_ka
+        I_max = 1000 * max_i_ka / base_i_ka
         I_min = -I_max
-        return I_min, I_max, base_i_ka
+        return I_min, I_max
 
     # If no current limit is provided, use large bounds
     return -1000, 1000, base_i_ka
+
+
 def op_graph(full_graph: nx.DiGraph, operational_nodes: Set[int]) -> nx.DiGraph:
     """Return the subgraph induced by ``operational_nodes``."""
     return full_graph.subgraph(operational_nodes).copy()
+
 
 def compute_info_dso(
     G: nx.Graph,
@@ -198,6 +214,7 @@ def compute_info_dso(
         info[c] = total
     return info
 
+
 if __name__ == "__main__":
     # Petit test manuel pour vérifier l'extraction des positions
     from Data.Networks.example_multivoltage_adapted import build
@@ -205,5 +222,7 @@ if __name__ == "__main__":
     net = build()
     G = create_graph(net)
     pos = nx.get_node_attributes(G, "pos")
-    assert len(pos) == len(G.nodes), "Toutes les positions de bus doivent être présentes."
+    assert len(pos) == len(
+        G.nodes
+    ), "Toutes les positions de bus doivent être présentes."
     print(f"Graph created with {len(G.nodes)} buses; all positions disponibles.")
