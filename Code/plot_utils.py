@@ -107,51 +107,111 @@ def plot_DOE(m, filename="child_nodes_envelopes.pdf"):
     plt.show()
 
 
-def plot_alloc_alpha(A, enveloppe_taille, curtail, close, somme_contributions,
-                     beta=None, filename="DOE_alloc_alpha.pdf"):
-    """Plot envelope volume, curtailment and DSO deviation versus alpha.
+def plot_alloc_alpha(
+    test_case,
+    operational_nodes=None,
+    parent_nodes=None,
+    children_nodes=None,
+    beta: float = 1.0,
+    alpha_min: float = 0.0,
+    alpha_max: float = 1.0,
+    alpha_step: float = 0.1,
+    show: bool = True,
+    filename: str = "DOE_alloc_alpha.pdf",
+):
+    """Run the optimisation for several ``alpha`` values and optionally plot the
+    evolution of key metrics.
+
+    The function repeatedly calls :func:`optimization.optim_problem` for
+    ``alpha`` ranging from ``alpha_min`` to ``alpha_max`` (inclusive) with the
+    provided step.  For each run, the envelope volume, the global curtailment
+    and the deviation from the DSO estimation are recorded.  If ``show`` is
+    ``True`` these metrics are plotted against ``alpha``.
 
     Parameters
     ----------
-    A : Sequence[float]
-        Values of the parameter alpha.
-    enveloppe_taille, curtail, close, somme_contributions : Sequence[float]
-        Metrics to plot as a function of alpha. ``close`` represents the
-        deviation of the center of the envelope from the DSO estimation and
-        ``somme_contributions`` is the sum of this deviation and the envelope
-        volume.
+    test_case : str or pandapowerNet
+        Network description passed to :func:`optimization.optim_problem`.
+    operational_nodes, parent_nodes, children_nodes : iterable, optional
+        Definition of the operational perimeter and boundary nodes used for the
+        optimisation.
     beta : float, optional
-        If provided, displayed in the plot title.
+        Fixed ``beta`` parameter for all optimisation runs.
+    alpha_min, alpha_max : float, optional
+        Bounds of the ``alpha`` sweep.
+    alpha_step : float, optional
+        Increment of ``alpha`` between two optimisation runs.
+    show : bool, optional
+        If ``True`` the resulting graph is displayed.  When ``False`` the
+        function simply returns the collected metrics.
     filename : str, optional
-        PDF file name for saving the plot.
+        Name of the PDF file used when saving the plot.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the list of ``alpha`` values and the
+        corresponding metrics.
     """
 
-    alpha_values = np.array(A)
+    from optimization import optim_problem  # local import to avoid cycle
 
-    enveloppe_taille_np = np.array(enveloppe_taille, dtype=float)
-    curtail_np = np.array(curtail, dtype=float)
-    close_np = np.array(close, dtype=float)
-    somme_contributions_np = np.array(somme_contributions, dtype=float)
+    alpha_values = np.arange(alpha_min, alpha_max + alpha_step, alpha_step)
+    envelope, curtail, deviation, total = [], [], [], []
 
-    plt.figure(figsize=(10, 6))
+    for alpha in alpha_values:
+        res = optim_problem(
+            test_case,
+            operational_nodes=operational_nodes,
+            parent_nodes=parent_nodes,
+            children_nodes=children_nodes,
+            alpha=float(alpha),
+            beta=beta,
+            plot_doe=False,
+        )["operational"]
+        m = res["model"]
+        # Extract the relevant metrics from the solved model
+        envelope.append(float(m.tot_P.value))
+        curtail.append(float(m.O.value))
+        deviation.append(float(m.tot_diff_DSO.value))
+        total.append(curtail[-1] + deviation[-1])
 
-    plt.plot(alpha_values, enveloppe_taille_np, marker='o', linestyle='-',
-             label='Envelope Volume')
-    plt.plot(alpha_values, curtail_np, marker='x', linestyle='--',
-             label='Curtailment')
-    plt.plot(alpha_values, close_np, marker='s', linestyle='--', color='blue',
-             label='Deviation of the center of the envelope from DSO estimation')
-    plt.plot(alpha_values, somme_contributions_np, marker='^', linestyle=':',
-             color='red',
-             label='Deviation of the center of the envelope from DSO estimation + Envelope Volume')
+    if show:
+        plt.figure(figsize=(10, 6))
+        plt.plot(alpha_values, envelope, marker="o", linestyle="-", label="Envelope Volume")
+        plt.plot(alpha_values, curtail, marker="x", linestyle="--", label="Curtailment")
+        plt.plot(
+            alpha_values,
+            deviation,
+            marker="s",
+            linestyle="--",
+            color="blue",
+            label="Deviation of the center of the envelope from DSO estimation",
+        )
+        plt.plot(
+            alpha_values,
+            total,
+            marker="^",
+            linestyle=":",
+            color="red",
+            label="Deviation of the center of the envelope from DSO estimation + Envelope Volume",
+        )
+        plt.xlabel("$\\alpha$")
+        plt.ylabel("Power (per-unit)")
+        plt.title(
+            "Evolution of the volume of the envelope, curtailment and closeness to DSO estimation as a function of parameter Alpha (beta={})".format(
+                beta
+            )
+        )
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(filename)
+        plt.show()
 
-    plt.xlabel('$\\alpha$')
-    plt.ylabel('Power (per-unit)')
-    if beta is not None:
-        plt.title('Evolution of the volume of the envelope, curtailment and '
-                  'closeness to DSO estimation as a function of parameter '
-                  f'Alpha (beta={beta})')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(filename)
-    plt.show()
+    return {
+        "alpha": alpha_values.tolist(),
+        "envelope": envelope,
+        "curtailment": curtail,
+        "deviation": deviation,
+        "total": total,
+    }
