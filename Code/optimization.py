@@ -31,6 +31,7 @@ def optim_problem(
     children_nodes=None,
     alpha: float = 1.0,
     beta: float = 1.0,
+    plot_doe: bool = True,
 ):
     """Run either an OPF or DOE optimisation on the given network.
 
@@ -42,6 +43,10 @@ def optim_problem(
         Definition of the operational perimeter and boundary nodes.
     alpha, beta: float
         Weights used in the objective function of the DOE optimisation.
+    plot_doe: bool
+        If ``True`` the DOE result for each run is plotted.  This is mainly
+        useful for interactive debugging; when scanning many ``alpha`` values
+        the plots can be disabled to avoid cluttering the output.
     """
 
     # 1) Charger le réseau et créer le graphe complet
@@ -90,5 +95,6 @@ def optim_problem(
     m, G = env_op
     constraints.constraints(m, G)  # crée m.objective_doe
     result = _solve_and_pack(m, G, "objective_doe")
-    plot_DOE(m)
+    if plot_doe:
+        plot_DOE(m)
     return {"operational": result}

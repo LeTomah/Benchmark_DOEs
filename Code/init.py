@@ -10,7 +10,7 @@ puis de lancer :  init.py
 """
 from check_requirements import install_missing_packages
 from optimization import optim_problem
-from plot_utils import plot_power_flow
+from plot_utils import plot_power_flow, plot_alloc_alpha
 import pandapower.networks as pn
 
 # ---- Paramétrage utilisateur ----
@@ -21,9 +21,31 @@ CHILDREN_NODES    = [1, 2, 3, 4, 5]
 # Parameters of the objective function
 ALPHA = 1
 BETA = 1
+
+# Optional sweep of alpha to visualise its impact on the optimisation.
+# Set ``PLOT_ALPHA`` to ``True`` to launch :func:`plot_alloc_alpha` with the
+# following bounds and step.
+PLOT_ALPHA = True
+ALPHA_MIN = 0.0
+ALPHA_MAX = 1.0
+ALPHA_STEP = 0.1
 # ---------------------------------
 
 install_missing_packages()
+
+# Optionally scan multiple ``alpha`` values and display the resulting metrics
+# before running the main optimisation.
+if PLOT_ALPHA:
+    plot_alloc_alpha(
+        test_case=TEST_CASE,
+        operational_nodes=OPERATIONAL_NODES,
+        parent_nodes=PARENT_NODES,
+        children_nodes=CHILDREN_NODES,
+        beta=BETA,
+        alpha_min=ALPHA_MIN,
+        alpha_max=ALPHA_MAX,
+        alpha_step=ALPHA_STEP,
+    )
 
 res = optim_problem(
     test_case=TEST_CASE,
