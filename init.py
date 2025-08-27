@@ -12,6 +12,7 @@ puis de lancer :  init.py
 from core.check_requirements import check_packages
 from core.optimization import optim_problem
 from viz.plot_alloc_alpha import plot_alloc_alpha
+from viz.plot_alloc_beta import plot_alloc_beta
 from viz.plot_network import plot_network
 from viz.plot_powerflow import plot_power_flow
 
@@ -31,6 +32,14 @@ PLOT_ALPHA = False
 ALPHA_MIN = 1.0
 ALPHA_MAX = 4.0
 ALPHA_STEP = 0.1
+
+# Optional sweep of beta to visualise its impact on the optimisation.
+# Set ``PLOT_BETA`` to ``True`` to launch :func:`plot_alloc_beta` with the
+# following bounds and step.
+PLOT_BETA = False
+BETA_MIN = 1.0
+BETA_MAX = 4.0
+BETA_STEP = 0.1
 # ---------------------------------
 
 
@@ -50,6 +59,18 @@ if PLOT_ALPHA:
         alpha_min=ALPHA_MIN,
         alpha_max=ALPHA_MAX,
         alpha_step=ALPHA_STEP,
+    )
+
+if PLOT_BETA:
+    plot_alloc_beta(
+        test_case=TEST_CASE,
+        operational_nodes=OPERATIONAL_NODES,
+        parent_nodes=PARENT_NODES,
+        children_nodes=CHILDREN_NODES,
+        alpha=ALPHA,
+        beta_min=BETA_MIN,
+        beta_max=BETA_MAX,
+        beta_step=BETA_STEP,
     )
 
 res = optim_problem(
