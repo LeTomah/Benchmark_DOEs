@@ -1222,4 +1222,4 @@ def build():
 
 
 # net=build()
-# pp.plotting.simple_plot(net)
+# pp.plotting.simple_plotly(net)
