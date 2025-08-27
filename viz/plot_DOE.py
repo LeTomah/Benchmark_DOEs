@@ -3,6 +3,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from .plot_curtailment import plot_curtailment
+
 
 def plot_DOE(m, filename="Figures/Child_nodes_envelopes.pdf"):
     """Plot power envelope and DSO estimation for child nodes."""
@@ -37,3 +39,5 @@ def plot_DOE(m, filename="Figures/Child_nodes_envelopes.pdf"):
     plt.grid(True)
     plt.savefig(filename)
     plt.show()
+
+    plot_curtailment(m)
