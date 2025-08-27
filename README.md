@@ -25,9 +25,18 @@ To run the methodology, follow these steps:
    ```bash
    https://github.com/LeTomah/Benchmark_DOEs.git
 
-2. Select your test case and the nodes you want for your graph. 
+2. Select your test case and the nodes you want for your graph.
 
-3. Launch the code.
+3. Set your Gurobi credentials as environment variables before running
+   the optimisation:
+
+   ```bash
+   export GUROBI_WLSACCESSID="your-access-id"
+   export GUROBI_WLSSECRET="your-secret"
+   export GUROBI_LICENSEID="your-license-id"
+   ```
+
+4. Launch the code.
 ### For Colab
 To run the methodology, follow these steps:
 
