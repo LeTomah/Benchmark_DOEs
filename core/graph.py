@@ -8,7 +8,7 @@ P > 0 consumption.
 import json
 import math
 from typing import Any, Dict, Iterable, Set
-
+from collections import deque
 import networkx as nx
 
 
@@ -166,19 +166,63 @@ def compute_info_dso(
     children_nodes: Iterable[int],
     p_attr: str = "P",
 ) -> Dict[int, float]:
-    """Estimate power contribution of each child node outside the operation area."""
+    """
+    Calcule info_DSO[c] pour chaque enfant c du sous-réseau opérationnel.
+
+    Règle: info_DSO[c] = P(c) + somme des P des noeuds externes
+           atteignables depuis c via des arêtes qui sortent du sous-réseau,
+           en restant en dehors du sous-réseau lors de l'exploration.
+
+    Paramètres
+    ----------
+    G : nx.Graph
+        Graphe électrique (avec G.nodes[n][p_attr] disponible).
+    operational_nodes : Iterable[int]
+        Nœuds du sous-réseau opérationnel (contrôlé).
+    children_nodes : Iterable[int]
+        Nœuds enfants à la frontière du sous-réseau.
+    p_attr : str
+        Nom de l’attribut puissance sur les nœuds (par défaut "P").
+
+    Retour
+    ------
+    Dict[int, float]
+        Dictionnaire { enfant -> demande/injection agrégée }.
+    """
     op_set: Set[int] = set(operational_nodes)
     children_set: Set[int] = set(children_nodes)
 
     def node_power(n: int) -> float:
+        # Par sûreté: 0.0 si l'attribut n'est pas présent
         return float(G.nodes[n].get(p_attr, 0.0))
 
     info: Dict[int, float] = {}
+
     for c in children_set:
         total = node_power(c)
+
+        # Pour chaque voisin hors sous-réseau, explorer UNIQUEMENT hors sous-réseau
         for v in G.neighbors(c):
-            if v not in op_set:
-                total += node_power(v)
+            if v in op_set:
+                continue  # reste dans le périmètre → ignoré ici
+
+            # BFS sur la composante externe atteignable depuis v sans
+            # re-rentrer dans le sous-réseau
+            seen = {c}  # évite de repasser par l'enfant
+            q = deque([v])
+
+            while q:
+                u = q.popleft()
+                if u in seen or u in op_set:
+                    continue
+                seen.add(u)
+                total += node_power(u)
+
+                for w in G.neighbors(u):
+                    if w not in seen and w not in op_set:
+                        q.append(w)
+
         info[c] = total
+
     return info
 

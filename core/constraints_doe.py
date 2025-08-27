@@ -93,6 +93,16 @@ def apply(m, G):
         m.NegativeNodes, m.VertP, m.VertV, rule=sign_E_lower_rule
     )
 
+    # def p_C_minus_limit_rule(m, pos):
+    #     return m.info_DSO_param[pos] >= m.P_C_set[pos, 1]
+    #
+    # m.p_C_minus_limit = pyo.Constraint(m.positive_demand, rule=p_C_minus_limit_rule)
+    #
+    # def p_C_plus_limit_rule(m, neg):
+    #     return m.P_C_set[neg, 0] >= m.info_DSO_param[neg]
+    #
+    # m.p_C_plus_limit = pyo.Constraint(m.negative_demand, rule=p_C_plus_limit_rule)
+
     # Objective
     def objective_rule_doe(m):
         return (
