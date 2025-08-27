@@ -15,7 +15,7 @@ from .constraints_common import (
 
 
 def apply(m, G):
-    """Apply DOE constraints and objective to model ``m``."""
+    """Apply DOE constraints and objective to model `m`."""
 
     # Children nodes consumption envelope
     def worst_case_children(m, u, vp, vv):
