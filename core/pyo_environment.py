@@ -39,6 +39,8 @@ def build_params(m, G, info_DSO, alpha, beta):
         initialize={n: float(info_DSO.get(n, 0.0)) for n in m.children},
         domain=pyo.Reals,
     )
+    m.positive_demand = pyo.Set(initialize=[n for n in m.children if pyo.value(m.info_DSO_param[n]) >= 0])
+    m.negative_demand = pyo.Set(initialize=[n for n in m.children if pyo.value(m.info_DSO_param[n]) <= 0])
     m.V_min = pyo.Param(initialize=0.9)
     m.V_max = pyo.Param(initialize=1.1)
     m.V_P = pyo.Param(m.VertV, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)

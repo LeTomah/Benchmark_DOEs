@@ -28,7 +28,7 @@ BETA = 1
 # Set ``PLOT_ALPHA`` to ``True`` to launch :func:`plot_alloc_alpha` with the
 # following bounds and step.
 PLOT_ALPHA = False
-ALPHA_MIN = 1.0
+ALPHA_MIN = 0.0
 ALPHA_MAX = 4.0
 ALPHA_STEP = 0.1
 # ---------------------------------
@@ -66,6 +66,6 @@ plot_network(res["full_graph"])
 
 # Display power flows for available models
 if "full" in res:
-    plot_power_flow(res["full"]["model"], res["full"]["graph"], 0, 1)
+    plot_power_flow(res["full"]["model"], res["full"]["graph"], 0, 0)
 if "operational" in res:
-    plot_power_flow(res["operational"]["model"], res["operational"]["graph"], 0, 1)
+    plot_power_flow(res["operational"]["model"], res["operational"]["graph"], 0, 0)
