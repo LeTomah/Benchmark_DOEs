@@ -50,8 +50,8 @@ def build_params(m, G, info_DSO, alpha, beta):
     m.V_min = pyo.Param(initialize=0.9)
     m.V_max = pyo.Param(initialize=1.1)
     m.V_P = pyo.Param(m.VertV, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
-    m.P_min = pyo.Param(initialize=-0.3)
-    m.P_max = pyo.Param(initialize=0.3)
+    m.P_min = pyo.Param(initialize=-0.0)
+    m.P_max = pyo.Param(initialize=0.0)
     m.theta_min = pyo.Param(initialize=-math.pi)
     m.theta_max = pyo.Param(initialize=math.pi)
     m.alpha = pyo.Param(initialize=alpha)
@@ -59,14 +59,14 @@ def build_params(m, G, info_DSO, alpha, beta):
     m.I_min = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): G[u][v].get("I_min_pu", -10) for (u, v) in m.Lines
+            (u, v): G[u][v].get("I_min_pu", -1) for (u, v) in m.Lines
         },
         domain=pyo.Reals,
     )
     m.I_max = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): G[u][v].get("I_max_pu", 10) for (u, v) in m.Lines
+            (u, v): G[u][v].get("I_max_pu", 1) for (u, v) in m.Lines
         },
         domain=pyo.Reals,
     )

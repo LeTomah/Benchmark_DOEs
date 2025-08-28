@@ -8,6 +8,7 @@ orientation.
 """
 
 import pyomo.environ as pyo
+import math
 
 
 def add_dc_flow_constraints(m, G):
@@ -24,14 +25,14 @@ def add_dc_flow_constraints(m, G):
             if edge_type == "line":
                 raise KeyError(f"Edge ({u},{v}) missing 'b_pu' attribute")
             return pyo.Constraint.Skip
-        return m.F[u, v, vp, vv] == b_pu * (
+        return m.F[u, v, vp, vv] == (m.V_P[vv] **2) * b_pu * (
             m.theta[u, vp, vv] - m.theta[v, vp, vv]
         )
 
     m.DCFlow = pyo.Constraint(m.Lines, m.VertP, m.VertV, rule=dc_power_flow_rule)
 
 
-def add_current_bounds(m, G):
+def add_current_bounds(m):
     """Bound the current magnitude using pre-computed limits."""
 
     def current_bounds_rule(m, u, v, vp, vv):
@@ -55,51 +56,51 @@ def add_curtailment_abs(m):
     Also enforce ``sum(z) <= curtailment_budget`` for each vertex pair.
     """
 
-    def curt_def_rule(m, n, vp, vv):
-        return m.curt[n, vp, vv] == m.P[n] - m.E[n, vp, vv]
+    def curt_def_rule(m, u, vp, vv):
+        return m.curt[u, vp, vv] == m.P[u] - m.E[u, vp, vv]
 
     m.curt_def = pyo.Constraint(m.Nodes, m.VertP, m.VertV, rule=curt_def_rule)
 
-    def abs_pos_rule(m, n, vp, vv):
-        return m.z[n, vp, vv] >= m.curt[n, vp, vv]
+    def abs_pos_rule(m, u, vp, vv):
+        return m.z[u, vp, vv] >= m.curt[u, vp, vv]
 
     m.abs_E_pos = pyo.Constraint(m.Nodes, m.VertP, m.VertV, rule=abs_pos_rule)
 
-    def abs_neg_rule(m, n, vp, vv):
-        return m.z[n, vp, vv] >= -m.curt[n, vp, vv]
+    def abs_neg_rule(m, u, vp, vv):
+        return m.z[u, vp, vv] >= -m.curt[u, vp, vv]
 
     m.abs_E_neg = pyo.Constraint(m.Nodes, m.VertP, m.VertV, rule=abs_neg_rule)
 
     def upper_bound_rule(m, vp, vv):
-        return sum(m.z[n, vp, vv] for n in m.Nodes) <= m.curtailment_budget
+        return sum(m.z[u, vp, vv] for u in m.Nodes) <= m.curtailment_budget
 
     m.upper_bound = pyo.Constraint(m.VertP, m.VertV, rule=upper_bound_rule)
 
 
-def power_balance_rule(m, n, vert_pow, vert_volt):
-    # Compute net flow into node n by summing over all lines (i,j) in m.Lines
-    expr = sum(
-        (m.F[i, j, vert_pow, vert_volt] if j == n else 0)
-      - (m.F[i, j, vert_pow, vert_volt] if i == n else 0)
-      for (i, j) in m.Lines
-    )
-    # If n is a parent node, subtract P_plus; otherwise use only E[n]
-    if n in m.parents:
-      return expr == m.E[n, vert_pow, vert_volt] - m.P_plus[n, vert_pow, vert_volt]
+def add_power_balance(m):
+    def power_balance_rule(m, u, vp, vv):
+        # Compute net flow into node n by summing over all lines (i,j) in m.Lines
+        expr = sum(
+            (m.F[i, j, vp, vv] if j == u else 0)
+          - (m.F[i, j, vp, vv] if i == u else 0)
+          for (i, j) in m.Lines
+        )
+        # If n is a parent node, subtract P_plus; otherwise use only E[n]
+        if u in m.parents:
+          return expr == m.E[u, vp, vv] - m.P_plus[u, vp, vv]
+        if u in m.children:
+          return expr ==  m.E[u, vp, vv] + m.P_minus[u, vp, vv]
+        else:
+          return expr == m.E[u, vp, vv]
 
-    if n in m.children:
-      return expr ==  m.E[n, vert_pow, vert_volt] + m.P_minus[n, vert_pow, vert_volt]
-    else:
-      return expr == m.E[n, vert_pow, vert_volt]
-
-m.power_balance = pyo.Constraint(m.Nodes, m.i, m.j, rule=power_balance_rule)
+    m.power_balance = pyo.Constraint(m.Nodes, m.VertP, m.VertV, rule=power_balance_rule)
 
 
 def add_phase_bounds(m):
     """Bound voltage angle variables between ``theta_min`` and ``theta_max``."""
 
-    def phase_constr_rule(m, n, vp, vv):
-        return pyo.inequality(m.theta_min, m.theta[n, vp, vv], m.theta_max)
+    def phase_constr_rule(m, u, vp, vv):
+        return pyo.inequality(m.theta_min, m.theta[u, vp, vv], m.theta_max)
 
     m.phaseConstr = pyo.Constraint(m.Nodes, m.VertP, m.VertV, rule=phase_constr_rule)
 
@@ -108,7 +109,7 @@ def add_current_definition(m):
     """Link current, voltage and power flow in per-unit: I*V = F."""
 
     def current_def_rule(m, u, v, vp, vv):
-        return m.I[u, v, vp, vv] * m.V_P[vv] == m.F[u, v, vp, vv]
+        return math.sqrt(3) * m.I[u, v, vp, vv] * m.V_P[vv] == m.F[u, v, vp, vv]
 
     m.current_def = pyo.Constraint(m.Lines, m.VertP, m.VertV, rule=current_def_rule)
 

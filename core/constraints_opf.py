@@ -27,6 +27,6 @@ def apply(m, G):
     add_voltage_vertices(m)
 
     def objective_rule_opf(m):
-        return m.alpha * m.curtailment_budget
+        return -m.alpha * m.curtailment_budget
 
-    m.objective_opf = pyo.Objective(rule=objective_rule_opf, sense=pyo.minimize)
+    m.objective_opf = pyo.Objective(rule=objective_rule_opf, sense=pyo.maximize)

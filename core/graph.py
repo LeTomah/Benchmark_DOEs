@@ -54,9 +54,6 @@ def extract_network_data(net: Any) -> Dict[str, Any]:
     # Net nodal power: positive = consumption, negative = production
     P = {idx: P_load[idx] + P_gen[idx] for idx in net.bus.index}
 
-    print (s_base)
-    print(idx, P)
-
     return {
         "pos": pos,
         "s_base": s_base,
@@ -79,7 +76,7 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
 
     G = nx.Graph()
 
-    data["s_base"] = 100 #MVA
+    s_base = 100.0 #MVA
 
     # Nodes
     for idx, row in data["bus"].iterrows():
@@ -98,9 +95,9 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
         u, v = row["from_bus"], row["to_bus"]
         x_ohm = row["x_ohm_per_km"] * row["length_km"]
         V_kv = data["bus"].at[u, "vn_kv"]
-        b_pu = V_kv**2 / (x_ohm * data["s_base"])
+        b_pu = V_kv**2 / (x_ohm * s_base)
         max_i_ka = row.get("max_i_ka")
-        base_i_ka = data["s_base"] / (math.sqrt(3) * V_kv)
+        base_i_ka = s_base / (math.sqrt(3) * V_kv)
         if max_i_ka is not None and not math.isnan(max_i_ka):
             I_max_pu = max_i_ka / base_i_ka
         else:
