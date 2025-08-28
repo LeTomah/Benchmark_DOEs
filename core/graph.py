@@ -40,18 +40,19 @@ def extract_network_data(net: Any) -> Dict[str, Any]:
 
     s_base = getattr(net, "sn_mva", 100.0)
 
-    # Gather nodal powers
+    # Gather nodal powers in MW (per-unit conversion done later)
     P_load = {idx: 0.0 for idx in net.bus.index}
     P_gen = {idx: 0.0 for idx in net.bus.index}
     for _, row in net.load.iterrows():
-        P_load[row["bus"]] += row["p_mw"] / s_base
+        P_load[row["bus"]] += row["p_mw"]
     for _, row in net.gen.iterrows():
-        P_gen[row["bus"]] += -row["p_mw"] / s_base
+        P_gen[row["bus"]] += -row["p_mw"]
     for _, row in net.sgen.iterrows():
-        P_gen[row["bus"]] += -row["p_mw"] / s_base
+        P_gen[row["bus"]] += -row["p_mw"]
     for _, row in net.ext_grid.iterrows():
-        P_gen[row["bus"]] += -70.0 / s_base
-    P = {idx: P_load[idx] - P_gen[idx] for idx in net.bus.index}
+        P_gen[row["bus"]] += -float(row.get("p_mw", 0.0))
+    # Net nodal power: positive = consumption, negative = production
+    P = {idx: P_load[idx] + P_gen[idx] for idx in net.bus.index}
 
     return {
         "pos": pos,
@@ -69,23 +70,24 @@ def extract_network_data(net: Any) -> Dict[str, Any]:
 def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
     """Build a ``networkx.Graph`` from extracted data.
 
+    Nodal powers provided in ``data`` are in MW and converted to per-unit here.
     Line reactances are given in ohms, base power in MVA, voltage base in kV.
     Susceptance in per-unit is computed as ``b_pu = V_base^2 / (S_base * X_ohm)``.
     """
 
     G = nx.Graph()
-    G.graph["s_base"] = data["s_base"]
 
-    # Nodes
+    # Nodes (powers converted to per-unit)
+    s_base = data["s_base"]
     for idx, row in data["bus"].iterrows():
         G.add_node(
             idx,
             label=row["name"],
             pos=data["pos"][idx],
             vn_kv=row["vn_kv"],
-            P_load=data["P_load"][idx],
-            P_gen=data["P_gen"][idx],
-            P=data["P"][idx],
+            P_load=data["P_load"][idx] / s_base,
+            P_gen=data["P_gen"][idx] / s_base,
+            P=data["P"][idx] / s_base,
         )
 
     # Lines
@@ -93,7 +95,14 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
         u, v = row["from_bus"], row["to_bus"]
         x_ohm = row["x_ohm_per_km"] * row["length_km"]
         V_kv = data["bus"].at[u, "vn_kv"]
-        b_pu = V_kv**2 / (x_ohm * data["s_base"])
+        b_pu = V_kv**2 / (x_ohm * s_base)
+        max_i_ka = row.get("max_i_ka")
+        base_i_ka = s_base / (math.sqrt(3) * V_kv)
+        if max_i_ka is not None and not math.isnan(max_i_ka):
+            I_max_pu = max_i_ka / base_i_ka
+        else:
+            I_max_pu = 1000
+        I_min_pu = -I_max_pu
         G.add_edge(
             u,
             v,
@@ -102,8 +111,10 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
             length=row["length_km"],
             std_type=row.get("std_type"),
             x_ohm=x_ohm,
-            max_i_ka=row.get("max_i_ka"),
+            max_i_ka=max_i_ka,
             b_pu=b_pu,
+            I_min_pu=I_min_pu,
+            I_max_pu=I_max_pu,
         )
 
     # Transformers
@@ -144,16 +155,6 @@ def create_graph(net: Any) -> nx.Graph:
 
 
 # Existing helpers remain unchanged
-
-def calculate_current_bounds(G, max_i_ka, v_base):
-    """Compute current limits in per-unit from network data."""
-    base_i_ka = G.graph["s_base"] / (math.sqrt(3) * v_base)
-    if max_i_ka is not None and not math.isnan(max_i_ka):
-        I_max = max_i_ka / base_i_ka
-        I_min = -I_max
-        return I_min, I_max
-    return -1000, 1000, base_i_ka
-
 
 def op_graph(full_graph: nx.DiGraph, operational_nodes: Set[int]) -> nx.DiGraph:
     """Return the subgraph induced by ``operational_nodes``."""
@@ -200,15 +201,15 @@ def compute_info_dso(
 
     for c in children_set:
         total = node_power(c)
+        seen = {c}
 
         # Pour chaque voisin hors sous-réseau, explorer UNIQUEMENT hors sous-réseau
         for v in G.neighbors(c):
-            if v in op_set:
-                continue  # reste dans le périmètre → ignoré ici
+            if v in op_set or v in seen:
+                continue  # reste dans le périmètre ou déjà exploré
 
             # BFS sur la composante externe atteignable depuis v sans
             # re-rentrer dans le sous-réseau
-            seen = {c}  # évite de repasser par l'enfant
             q = deque([v])
 
             while q:
