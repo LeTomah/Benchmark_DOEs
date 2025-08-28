@@ -50,8 +50,9 @@ def extract_network_data(net: Any) -> Dict[str, Any]:
     for _, row in net.sgen.iterrows():
         P_gen[row["bus"]] += -row["p_mw"] / s_base
     for _, row in net.ext_grid.iterrows():
-        P_gen[row["bus"]] += -70.0 / s_base
-    P = {idx: P_load[idx] - P_gen[idx] for idx in net.bus.index}
+        P_gen[row["bus"]] += -float(row.get("p_mw", 0.0)) / s_base
+    # Net nodal power: positive = consumption, negative = production
+    P = {idx: P_load[idx] + P_gen[idx] for idx in net.bus.index}
 
     return {
         "pos": pos,
