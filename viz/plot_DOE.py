@@ -15,10 +15,6 @@ def plot_DOE(m, filename="Figures/Child_nodes_envelopes.pdf"):
     info = [getattr(m.info_DSO_param[n], "value", m.info_DSO_param[n]) for n in children]
     x = np.arange(len(children)) * 5e-4
 
-    # Debugging: print P_C_set values for each child node
-    for n, val0, val1 in zip(children, p0, p1):
-        print(f"Node {n}: P_C_set[0]={val0}, P_C_set[1]={val1}")
-
 
     plt.figure(figsize=(5, 6))
     for xs, hi, lo in zip(x, p0, p1):

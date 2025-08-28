@@ -76,24 +76,23 @@ def add_curtailment_abs(m):
     m.upper_bound = pyo.Constraint(m.VertP, m.VertV, rule=upper_bound_rule)
 
 
-def add_power_balance(m, G):
-    """Power balance at each node, accounting for parents and children."""
+def power_balance_rule(m, n, vert_pow, vert_volt):
+    # Compute net flow into node n by summing over all lines (i,j) in m.Lines
+    expr = sum(
+        (m.F[i, j, vert_pow, vert_volt] if j == n else 0)
+      - (m.F[i, j, vert_pow, vert_volt] if i == n else 0)
+      for (i, j) in m.Lines
+    )
+    # If n is a parent node, subtract P_plus; otherwise use only E[n]
+    if n in m.parents:
+      return expr == m.E[n, vert_pow, vert_volt] - m.P_plus[n, vert_pow, vert_volt]
 
-    def net_flow_expr(m, n, vp, vv):
-        return sum(
-            m.F[u, v, vp, vv] if v == n else -m.F[u, v, vp, vv] if u == n else 0
-            for (u, v) in m.Lines
-        )
+    if n in m.children:
+      return expr ==  m.E[n, vert_pow, vert_volt] + m.P_minus[n, vert_pow, vert_volt]
+    else:
+      return expr == m.E[n, vert_pow, vert_volt]
 
-    def balance_rule(m, n, vp, vv):
-        expr = net_flow_expr(m, n, vp, vv)
-        if n in m.parents:
-            return expr == m.E[n, vp, vv] - m.P_plus[n, vp, vv]
-        if n in m.children:
-            return expr == m.E[n, vp, vv] + m.P_minus[n, vp, vv]
-        return expr == m.E[n, vp, vv]
-
-    m.power_balance = pyo.Constraint(m.Nodes, m.VertP, m.VertV, rule=balance_rule)
+m.power_balance = pyo.Constraint(m.Nodes, m.i, m.j, rule=power_balance_rule)
 
 
 def add_phase_bounds(m):

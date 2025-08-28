@@ -23,7 +23,7 @@ OPERATIONAL_NODES = [0, 1, 2, 3, 4, 5]  # [] => OPF ; sinon => DOE
 PARENT_NODES = [0]
 CHILDREN_NODES = [1, 2, 3, 4, 5]
 # Parameters of the objective function
-ALPHA = 2
+ALPHA = 1
 BETA = 1
 
 # Optional sweep of alpha to visualise its impact on the optimisation.

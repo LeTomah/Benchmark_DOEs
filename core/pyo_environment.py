@@ -59,14 +59,14 @@ def build_params(m, G, info_DSO, alpha, beta):
     m.I_min = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): G[u][v].get("I_min_pu", -1000) for (u, v) in m.Lines
+            (u, v): G[u][v].get("I_min_pu", -10) for (u, v) in m.Lines
         },
         domain=pyo.Reals,
     )
     m.I_max = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): G[u][v].get("I_max_pu", 1000) for (u, v) in m.Lines
+            (u, v): G[u][v].get("I_max_pu", 10) for (u, v) in m.Lines
         },
         domain=pyo.Reals,
     )

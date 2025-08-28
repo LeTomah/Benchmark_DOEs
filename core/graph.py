@@ -38,7 +38,7 @@ def extract_network_data(net: Any) -> Dict[str, Any]:
     else:
         raise AttributeError("Bus positions not available in network.")
 
-    s_base = getattr(net, "sn_mva", 100.0)
+    s_base = 100.0 #MVA
 
     # Gather nodal powers
     P_load = {idx: 0.0 for idx in net.bus.index}
@@ -53,6 +53,9 @@ def extract_network_data(net: Any) -> Dict[str, Any]:
         P_gen[row["bus"]] += -float(row.get("p_mw", 0.0)) / s_base
     # Net nodal power: positive = consumption, negative = production
     P = {idx: P_load[idx] + P_gen[idx] for idx in net.bus.index}
+
+    print (s_base)
+    print(idx, P)
 
     return {
         "pos": pos,
@@ -75,7 +78,8 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
     """
 
     G = nx.Graph()
-    G.graph["s_base"] = data["s_base"]
+
+    data["s_base"] = 100 #MVA
 
     # Nodes
     for idx, row in data["bus"].iterrows():
@@ -100,7 +104,7 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
         if max_i_ka is not None and not math.isnan(max_i_ka):
             I_max_pu = max_i_ka / base_i_ka
         else:
-            I_max_pu = 1000
+            I_max_pu = 10
         I_min_pu = -I_max_pu
         G.add_edge(
             u,

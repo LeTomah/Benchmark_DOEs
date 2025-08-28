@@ -17,12 +17,6 @@ from .constraints_common import (
 def apply(m, G):
     """Apply DOE constraints and objective to model `m`."""
 
-    # Children nodes consumption envelope
-    def worst_case_children(m, u, vp, vv):
-        return m.P_C_set[u, vp] == m.P_minus[u, vp, vv]
-
-    m.worst_case = pyo.Constraint(m.children, m.VertP, m.VertV, rule=worst_case_children)
-
     # Common constraints
     add_curtailment_abs(m)
     add_current_bounds(m, G)
@@ -32,6 +26,17 @@ def apply(m, G):
     add_power_balance(m, G)
     add_parent_power_bounds(m)
     add_voltage_vertices(m)
+
+    # Children nodes consumption envelope
+    def worst_case_children(m, u, vp, vv):
+        return m.P_C_set[u, vp] == m.P_minus[u, vp, vv]
+
+    m.worst_case = pyo.Constraint(m.children, m.VertP, m.VertV, rule=worst_case_children)
+
+    def logical_constraint_rule(m, n):
+        return m.P_C_set[n, 0] >= m.P_C_set[n, 1]
+
+    m.logical_constraint = pyo.Constraint(m.children, rule=logical_constraint_rule)
 
     # Envelope volume and DSO gap
     def aux_constraint_rule(m, u):
