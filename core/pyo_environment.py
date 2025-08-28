@@ -11,8 +11,6 @@ from typing import Dict, Optional
 
 import pyomo.environ as pyo
 
-from .graph import calculate_current_bounds
-
 
 def build_sets(m, G, parent_nodes, children_nodes):
     """Create model sets."""
@@ -53,20 +51,14 @@ def build_params(m, G, info_DSO, alpha, beta):
     m.I_min = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): calculate_current_bounds(
-                G, G[u][v].get("max_i_ka"), G.nodes[u]["vn_kv"]
-            )[0]
-            for (u, v) in m.Lines
+            (u, v): G[u][v].get("I_min_pu", -1000) for (u, v) in m.Lines
         },
         domain=pyo.Reals,
     )
     m.I_max = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): calculate_current_bounds(
-                G, G[u][v].get("max_i_ka"), G.nodes[u]["vn_kv"]
-            )[1]
-            for (u, v) in m.Lines
+            (u, v): G[u][v].get("I_max_pu", 1000) for (u, v) in m.Lines
         },
         domain=pyo.Reals,
     )

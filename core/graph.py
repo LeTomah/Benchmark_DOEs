@@ -94,6 +94,13 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
         x_ohm = row["x_ohm_per_km"] * row["length_km"]
         V_kv = data["bus"].at[u, "vn_kv"]
         b_pu = V_kv**2 / (x_ohm * data["s_base"])
+        max_i_ka = row.get("max_i_ka")
+        base_i_ka = data["s_base"] / (math.sqrt(3) * V_kv)
+        if max_i_ka is not None and not math.isnan(max_i_ka):
+            I_max_pu = max_i_ka / base_i_ka
+        else:
+            I_max_pu = 1000
+        I_min_pu = -I_max_pu
         G.add_edge(
             u,
             v,
@@ -102,8 +109,10 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
             length=row["length_km"],
             std_type=row.get("std_type"),
             x_ohm=x_ohm,
-            max_i_ka=row.get("max_i_ka"),
+            max_i_ka=max_i_ka,
             b_pu=b_pu,
+            I_min_pu=I_min_pu,
+            I_max_pu=I_max_pu,
         )
 
     # Transformers
@@ -144,16 +153,6 @@ def create_graph(net: Any) -> nx.Graph:
 
 
 # Existing helpers remain unchanged
-
-def calculate_current_bounds(G, max_i_ka, v_base):
-    """Compute current limits in per-unit from network data."""
-    base_i_ka = G.graph["s_base"] / (math.sqrt(3) * v_base)
-    if max_i_ka is not None and not math.isnan(max_i_ka):
-        I_max = max_i_ka / base_i_ka
-        I_min = -I_max
-        return I_min, I_max
-    return -1000, 1000, base_i_ka
-
 
 def op_graph(full_graph: nx.DiGraph, operational_nodes: Set[int]) -> nx.DiGraph:
     """Return the subgraph induced by ``operational_nodes``."""
