@@ -5,7 +5,8 @@ Il suffit de choisir :
     • les nœuds opérationnels
     • les parents
     • les enfants
-Et de renseigner ses identifiants gurobi dans optimization.py (l.131->133)
+Et de choisir les options de plot (pour alpha et beta)
+
 puis de lancer :  init.py
 """
 
