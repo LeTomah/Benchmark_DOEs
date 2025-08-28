@@ -96,6 +96,7 @@ def add_power_balance(m):
     m.power_balance = pyo.Constraint(m.Nodes, m.VertP, m.VertV, rule=power_balance_rule)
 
 
+
 def add_phase_bounds(m):
     """Bound voltage angle variables between ``theta_min`` and ``theta_max``."""
 
