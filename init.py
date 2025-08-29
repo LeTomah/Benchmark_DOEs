@@ -10,16 +10,12 @@ Et de choisir les options de plot (pour alpha et beta)
 puis de lancer :  init.py
 """
 
-import argparse
-
 from core.check_requirements import check_packages
 from core.optimization import optim_problem
 from viz.plot_alloc_alpha import plot_alloc_alpha
 from viz.plot_alloc_beta import plot_alloc_beta
 from viz.plot_network import plot_network
 from viz.plot_powerflow import plot_power_flow
-from viz.plot_utils import parse_alpha_list, plot_relative_curtailment_overcost
-from viz.rel_overcost import run_series_over_alpha_for_overcost
 
 # ---- Paramétrage utilisateur ----
 TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"
@@ -50,38 +46,8 @@ CHECK_REQ = False
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Benchmark DOEs entrypoint")
-    parser.add_argument(
-        "--plot-rel-overcost",
-        action="store_true",
-        help="Run DOE series over alpha and plot relative curtailment overcost",
-    )
-    parser.add_argument(
-        "--alpha-list",
-        type=str,
-        default="",
-        help="Comma-separated list or start:stop:step range of alpha values",
-    )
-    args = parser.parse_args()
-
     if CHECK_REQ:
         check_packages()
-
-    if args.plot_rel_overcost:
-        if not args.alpha_list:
-            raise ValueError("--alpha-list required with --plot-rel-overcost")
-        alphas = parse_alpha_list(args.alpha_list)
-        df_over = run_series_over_alpha_for_overcost(
-            alphas,
-            test_case=TEST_CASE,
-            operational_nodes=OPERATIONAL_NODES,
-            parent_nodes=PARENT_NODES,
-            children_nodes=CHILDREN_NODES,
-            beta=BETA,
-        )
-        plot_relative_curtailment_overcost(
-            df_over, savepath="figures/rel_overcost_vs_alpha"
-        )
 
     # Optionally scan multiple ``alpha`` values and display the resulting metrics
     # before running the main optimisation.

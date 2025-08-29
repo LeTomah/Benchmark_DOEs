@@ -49,14 +49,16 @@ compared to the OPF baseline is defined as
 \[\text{surcoût\_relatif\_DOE}(\alpha) = 100 \times \frac{O_{\text{DOE}}(\alpha) - O_{\text{OPF}}}{O_{\text{OPF}}}\]
 
 where ``O`` denotes the unweighted curtailment component of the objective.
-To compute and plot this metric for several ``alpha`` values:
+The module `overcost_vs_alpha` executes all OPF and DOE runs for a range of
+``alpha`` values and generates the associated plot. Configure the bounds and
+step at the top of `overcost_vs_alpha/__init__.py`, then run:
 
 ```bash
-python init.py --plot-rel-overcost --alpha-list 0,0.5,1.0
+python -m overcost_vs_alpha
 ```
 
-The command produces `results/rel_overcost_vs_alpha.csv` and the plot
-`figures/rel_overcost_vs_alpha.png` (and `.pdf`).
+This command produces `overcost_vs_alpha/rel_overcost_vs_alpha.csv` and the
+plot `overcost_vs_alpha/rel_overcost_vs_alpha.png` (and `.pdf`).
 
 ### For Colab
 To run the methodology, follow these steps:
