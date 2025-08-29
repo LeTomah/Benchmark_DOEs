@@ -33,10 +33,10 @@ def apply(m, G):
 
     m.worst_case = pyo.Constraint(m.children, m.VertP, m.VertV, rule=worst_case_children)
 
-    # def logical_constraint_rule(m, u):
-    #     return m.P_C_set[u, 0] >= m.P_C_set[u, 1]
-    #
-    # m.logical_constraint = pyo.Constraint(m.children, rule=logical_constraint_rule)
+    def logical_constraint_rule(m, u):
+        return m.P_C_set[u, 0] >= m.P_C_set[u, 1]
+
+    m.logical_constraint = pyo.Constraint(m.children, rule=logical_constraint_rule)
 
     def children_voltage_rule(m, children, vp, vv):
         return pyo.inequality(m.V_min, m.V[children, vp, vv], m.V_max)

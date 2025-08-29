@@ -23,8 +23,8 @@ OPERATIONAL_NODES = [0, 1, 2, 3, 4, 5]  # [] => OPF ; sinon => DOE
 PARENT_NODES = [0]
 CHILDREN_NODES = [1, 2, 3, 4, 5]
 # Parameters of the objective function
-ALPHA = 3
-BETA = 3
+ALPHA = 2
+BETA = 1
 
 # Optional sweep of alpha to visualise its impact on the optimisation.
 # Set ``PLOT_ALPHA`` to ``True`` to launch :func:`plot_alloc_alpha` with the
