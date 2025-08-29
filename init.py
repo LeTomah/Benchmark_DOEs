@@ -42,53 +42,57 @@ BETA_MIN = 1.0
 BETA_MAX = 4.0
 BETA_STEP = 0.1
 # ---------------------------------
-
 CHECK_REQ = False
-if CHECK_REQ:
-    check_packages()
 
-# Optionally scan multiple ``alpha`` values and display the resulting metrics
-# before running the main optimisation.
-if PLOT_ALPHA:
-    plot_alloc_alpha(
-        test_case=TEST_CASE,
-        operational_nodes=OPERATIONAL_NODES,
-        parent_nodes=PARENT_NODES,
-        children_nodes=CHILDREN_NODES,
-        beta=BETA,
-        alpha_min=ALPHA_MIN,
-        alpha_max=ALPHA_MAX,
-        alpha_step=ALPHA_STEP,
-    )
 
-if PLOT_BETA:
-    plot_alloc_beta(
+def main():
+    if CHECK_REQ:
+        check_packages()
+
+    # Optionally scan multiple ``alpha`` values and display the resulting metrics
+    # before running the main optimisation.
+    if PLOT_ALPHA:
+        plot_alloc_alpha(
+            test_case=TEST_CASE,
+            operational_nodes=OPERATIONAL_NODES,
+            parent_nodes=PARENT_NODES,
+            children_nodes=CHILDREN_NODES,
+            beta=BETA,
+            alpha_min=ALPHA_MIN,
+            alpha_max=ALPHA_MAX,
+            alpha_step=ALPHA_STEP,
+        )
+
+    if PLOT_BETA:
+        plot_alloc_beta(
+            test_case=TEST_CASE,
+            operational_nodes=OPERATIONAL_NODES,
+            parent_nodes=PARENT_NODES,
+            children_nodes=CHILDREN_NODES,
+            alpha=ALPHA,
+            beta_min=BETA_MIN,
+            beta_max=BETA_MAX,
+            beta_step=BETA_STEP,
+        )
+
+    res = optim_problem(
         test_case=TEST_CASE,
         operational_nodes=OPERATIONAL_NODES,
         parent_nodes=PARENT_NODES,
         children_nodes=CHILDREN_NODES,
         alpha=ALPHA,
-        beta_min=BETA_MIN,
-        beta_max=BETA_MAX,
-        beta_step=BETA_STEP,
+        beta=BETA,
     )
 
-res = optim_problem(
-    test_case=TEST_CASE,
-    operational_nodes=OPERATIONAL_NODES,
-    parent_nodes=PARENT_NODES,
-    children_nodes=CHILDREN_NODES,
-    alpha=ALPHA,
-    beta=BETA,
-)
+    # Always display the complete graph
+    plot_network(res["full_graph"])
 
-# Always display the complete graph
-plot_network(res["full_graph"])
-
-# Display power flows for available models
-if "full" in res:
-    plot_power_flow(res["full"]["model"], res["full"]["graph"], 0, 0)
-if "operational" in res:
-    plot_power_flow(res["operational"]["model"], res["operational"]["graph"], 0, 0)
+    # Display power flows for available models
+    if "full" in res:
+        plot_power_flow(res["full"]["model"], res["full"]["graph"], 0, 0)
+    if "operational" in res:
+        plot_power_flow(res["operational"]["model"], res["operational"]["graph"], 0, 0)
 
 
+if __name__ == "__main__":
+    main()
