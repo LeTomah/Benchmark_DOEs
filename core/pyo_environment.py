@@ -50,23 +50,23 @@ def build_params(m, G, info_DSO, alpha, beta):
     m.V_min = pyo.Param(initialize=0.9)
     m.V_max = pyo.Param(initialize=1.1)
     m.V_P = pyo.Param(m.VertV, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
-    m.P_min = pyo.Param(initialize=-0.3)
-    m.P_max = pyo.Param(initialize=0.3)
-    m.theta_min = pyo.Param(initialize=-math.pi)
-    m.theta_max = pyo.Param(initialize=math.pi)
+    m.P_min = pyo.Param(initialize=-0.0)
+    m.P_max = pyo.Param(initialize=0.0)
+    m.theta_min = pyo.Param(initialize=-1)
+    m.theta_max = pyo.Param(initialize=1)
     m.alpha = pyo.Param(initialize=alpha)
     m.beta = pyo.Param(initialize=beta)
     m.I_min = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): G[u][v].get("I_min_pu", -1000) for (u, v) in m.Lines
+            (u, v): G[u][v].get("I_min_pu", -1) for (u, v) in m.Lines
         },
         domain=pyo.Reals,
     )
     m.I_max = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): G[u][v].get("I_max_pu", 1000) for (u, v) in m.Lines
+            (u, v): G[u][v].get("I_max_pu", 1) for (u, v) in m.Lines
         },
         domain=pyo.Reals,
     )
@@ -82,9 +82,9 @@ def build_variables(m, G):
     m.P_plus = pyo.Var(m.parents, m.VertP, m.VertV, domain=pyo.Reals)
     # Bound child injections to realistic per-unit range
     m.P_minus = pyo.Var(
-        m.children, m.VertP, m.VertV, domain=pyo.Reals, bounds=(-1, 1)
+        m.children, m.VertP, m.VertV, domain=pyo.Reals
     )
-    m.P_C_set = pyo.Var(m.children, m.VertP, domain=pyo.Reals, bounds=(-1, 1))
+    m.P_C_set = pyo.Var(m.children, m.VertP, domain=pyo.Reals)
     m.z = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.NonNegativeReals)
     m.curt = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.Reals)
     m.aux = pyo.Var(m.children, domain=pyo.Reals)

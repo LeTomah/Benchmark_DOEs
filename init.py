@@ -43,7 +43,6 @@ BETA_MAX = 4.0
 BETA_STEP = 0.1
 # ---------------------------------
 
-
 CHECK_REQ = False
 if CHECK_REQ:
     check_packages()
@@ -91,3 +90,5 @@ if "full" in res:
     plot_power_flow(res["full"]["model"], res["full"]["graph"], 0, 0)
 if "operational" in res:
     plot_power_flow(res["operational"]["model"], res["operational"]["graph"], 0, 0)
+
+
