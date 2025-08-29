@@ -20,6 +20,16 @@ def _solve_and_pack(m, G, objective_name: str):
     results = solver.solve(m, tee=True)
     status = str(results.solver.status)
     obj = pyo.value(getattr(m, objective_name))
+    for u, v, vp, vv in m.F:
+        print(
+            f"Flow on line ({u}, {v}) for P vertex {vp} and V vertex {vv}: "
+            f"{pyo.value(m.F[u, v, vp, vv])}"
+        )
+    for u, v, vp, vv in m.I:
+        print(
+            f"Current flow on line ({u}, {v}) for P vertex {vp} and V vertex {vv}: "
+            f"I = {pyo.value(m.I[u, v, vp, vv])}"
+        )
     return {"status": status, "objective": obj, "model": m, "graph": G}
 
 

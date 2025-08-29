@@ -11,8 +11,6 @@ from typing import Dict, Optional
 
 import pyomo.environ as pyo
 
-from .graph import calculate_current_bounds
-
 
 def build_sets(m, G, parent_nodes, children_nodes):
     """Create model sets."""
@@ -32,41 +30,43 @@ def build_params(m, G, info_DSO, alpha, beta):
         domain=pyo.Reals,
         mutable=True,
     )
-    m.PositiveNodes = pyo.Set(initialize=[n for n in m.Nodes if G.nodes[n].get("P", 0.0) >= 0])
-    m.NegativeNodes = pyo.Set(initialize=[n for n in m.Nodes if G.nodes[n].get("P", 0.0) <= 0])
+    m.PositiveNodes = pyo.Set(
+        initialize=[n for n in m.Nodes if G.nodes[n].get("P", 0.0) > 0]
+    )
+    m.NegativeNodes = pyo.Set(
+        initialize=[n for n in m.Nodes if G.nodes[n].get("P", 0.0) < 0]
+    )
     m.info_DSO_param = pyo.Param(
         m.children,
         initialize={n: float(info_DSO.get(n, 0.0)) for n in m.children},
         domain=pyo.Reals,
     )
-    m.positive_demand = pyo.Set(initialize=[n for n in m.children if pyo.value(m.info_DSO_param[n]) >= 0])
-    m.negative_demand = pyo.Set(initialize=[n for n in m.children if pyo.value(m.info_DSO_param[n]) <= 0])
+    m.positive_demand = pyo.Set(
+        initialize=[n for n in m.children if pyo.value(m.info_DSO_param[n]) > 0]
+    )
+    m.negative_demand = pyo.Set(
+        initialize=[n for n in m.children if pyo.value(m.info_DSO_param[n]) < 0]
+    )
     m.V_min = pyo.Param(initialize=0.9)
     m.V_max = pyo.Param(initialize=1.1)
     m.V_P = pyo.Param(m.VertV, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
-    m.P_min = pyo.Param(initialize=-0.2)
-    m.P_max = pyo.Param(initialize=0.2)
-    m.theta_min = pyo.Param(initialize=-math.pi)
-    m.theta_max = pyo.Param(initialize=math.pi)
+    m.P_min = pyo.Param(initialize=-0.0)
+    m.P_max = pyo.Param(initialize=0.0)
+    m.theta_min = pyo.Param(initialize=-1)
+    m.theta_max = pyo.Param(initialize=1)
     m.alpha = pyo.Param(initialize=alpha)
     m.beta = pyo.Param(initialize=beta)
     m.I_min = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): calculate_current_bounds(
-                G, G[u][v].get("max_i_ka"), G.nodes[u]["vn_kv"]
-            )[0]
-            for (u, v) in m.Lines
+            (u, v): G[u][v].get("I_min_pu", -1) for (u, v) in m.Lines
         },
         domain=pyo.Reals,
     )
     m.I_max = pyo.Param(
         m.Lines,
         initialize={
-            (u, v): calculate_current_bounds(
-                G, G[u][v].get("max_i_ka"), G.nodes[u]["vn_kv"]
-            )[1]
-            for (u, v) in m.Lines
+            (u, v): G[u][v].get("I_max_pu", 1) for (u, v) in m.Lines
         },
         domain=pyo.Reals,
     )
@@ -80,7 +80,10 @@ def build_variables(m, G):
     m.V = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.NonNegativeReals)
     m.E = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.Reals)
     m.P_plus = pyo.Var(m.parents, m.VertP, m.VertV, domain=pyo.Reals)
-    m.P_minus = pyo.Var(m.children, m.VertP, m.VertV, domain=pyo.Reals)
+    # Bound child injections to realistic per-unit range
+    m.P_minus = pyo.Var(
+        m.children, m.VertP, m.VertV, domain=pyo.Reals
+    )
     m.P_C_set = pyo.Var(m.children, m.VertP, domain=pyo.Reals)
     m.z = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.NonNegativeReals)
     m.curt = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.Reals)

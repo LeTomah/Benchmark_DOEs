@@ -15,7 +15,17 @@ from .constraints_common import (
 
 
 def apply(m, G):
-    """Apply DOE constraints and objective to model ``m``."""
+    """Apply DOE constraints and objective to model `m`."""
+
+    # Common constraints
+    add_curtailment_abs(m)
+    add_current_bounds(m)
+    add_dc_flow_constraints(m, G)
+    add_current_definition(m)
+    add_phase_bounds(m)
+    add_power_balance(m)
+    add_parent_power_bounds(m)
+    add_voltage_vertices(m)
 
     # Children nodes consumption envelope
     def worst_case_children(m, u, vp, vv):
@@ -23,15 +33,15 @@ def apply(m, G):
 
     m.worst_case = pyo.Constraint(m.children, m.VertP, m.VertV, rule=worst_case_children)
 
-    # Common constraints
-    add_curtailment_abs(m)
-    add_current_bounds(m, G)
-    add_dc_flow_constraints(m, G)
-    add_current_definition(m)
-    add_phase_bounds(m)
-    add_power_balance(m, G)
-    add_parent_power_bounds(m)
-    add_voltage_vertices(m)
+    def logical_constraint_rule(m, u):
+        return m.P_C_set[u, 0] >= m.P_C_set[u, 1]
+
+    m.logical_constraint = pyo.Constraint(m.children, rule=logical_constraint_rule)
+
+    def children_voltage_rule(m, children, vp, vv):
+        return pyo.inequality(m.V_min, m.V[children, vp, vv], m.V_max)
+
+    m.children_voltage = pyo.Constraint(m.children, m.VertP, m.VertV, rule=children_voltage_rule)
 
     # Envelope volume and DSO gap
     def aux_constraint_rule(m, u):
@@ -46,14 +56,14 @@ def apply(m, G):
 
     def diff_dso_rule(m, u):
         return -m.diff_DSO[u] <= (
-            (m.P_C_set[u, 0] + m.P_C_set[u, 1]) / 2 - m.info_DSO_param[u]
+                ((m.P_C_set[u, 0] + m.P_C_set[u, 1]) / 2) - m.info_DSO_param[u]
         )
 
     m.diff_DSO_constraint = pyo.Constraint(m.children, rule=diff_dso_rule)
 
     def diff_bis_dso_rule(m, u):
         return (
-            (m.P_C_set[u, 0] + m.P_C_set[u, 1]) / 2 - m.info_DSO_param[u]
+                ((m.P_C_set[u, 0] + m.P_C_set[u, 1]) / 2) - m.info_DSO_param[u]
             <= m.diff_DSO[u]
         )
 
@@ -106,9 +116,7 @@ def apply(m, G):
     # Objective
     def objective_rule_doe(m):
         return (
-            m.envelope_volume
-            - m.alpha * m.curtailment_budget
-            - m.beta * m.envelope_center_gap
+            m.envelope_volume -(m.alpha * m.curtailment_budget) -(m.beta * m.envelope_center_gap)
         )
 
     m.objective_doe = pyo.Objective(rule=objective_rule_doe, sense=pyo.maximize)

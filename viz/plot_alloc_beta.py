@@ -1,4 +1,4 @@
-"""Sweep alpha values and plot resulting metrics."""
+"""Sweep beta values and plot resulting metrics."""
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,33 +7,33 @@ from matplotlib.lines import Line2D
 from matplotlib.legend_handler import HandlerTuple
 
 
-def plot_alloc_alpha(
+def plot_alloc_beta(
     test_case,
     operational_nodes=None,
     parent_nodes=None,
     children_nodes=None,
-    beta: float = 1.0,
-    alpha_min: float = 0.0,
-    alpha_max: float = 1.0,
-    alpha_step: float = 0.1,
+    alpha: float = 1.0,
+    beta_min: float = 0.0,
+    beta_max: float = 1.0,
+    beta_step: float = 0.1,
     show: bool = True,
-    filename: str = "Figures/DOE_alloc_alpha_final.pdf",
+    filename: str = "Figures/DOE_alloc_beta_final.pdf",
 ):
-    """Run the optimisation for several ``alpha`` values and optionally plot metrics."""
+    """Run the optimisation for several ``beta`` values and optionally plot metrics."""
 
     from core.optimization import optim_problem  # local import to avoid cycle
 
-    alpha_values = np.arange(alpha_min, alpha_max + alpha_step, alpha_step)
+    beta_values = np.arange(beta_min, beta_max + beta_step, beta_step)
     envelope, curtail, deviation, total = [], [], [], []
 
-    for alpha in alpha_values:
+    for beta in beta_values:
         res = optim_problem(
             test_case,
             operational_nodes=operational_nodes,
             parent_nodes=parent_nodes,
             children_nodes=children_nodes,
-            alpha=float(alpha),
-            beta=beta,
+            alpha=alpha,
+            beta=float(beta),
             plot_doe=False,
         )["operational"]
         m = res["model"]
@@ -43,7 +43,7 @@ def plot_alloc_alpha(
         total.append(envelope[-1] + deviation[-1])
 
     if show:
-        alpha_values_np = np.array(alpha_values)
+        beta_values_np = np.array(beta_values)
         envelope_np = np.array(envelope, dtype=float)
         curtail_np = np.array(curtail, dtype=float)
         deviation_np = np.array(deviation, dtype=float)
@@ -53,7 +53,7 @@ def plot_alloc_alpha(
 
         # Envelope Volume (BLUE)
         plt.plot(
-            alpha_values_np,
+            beta_values_np,
             envelope_np,
             marker="o",
             linestyle="-",
@@ -63,7 +63,7 @@ def plot_alloc_alpha(
 
         # Curtailment (ORANGE)
         plt.plot(
-            alpha_values_np,
+            beta_values_np,
             curtail_np,
             marker="x",
             linestyle="--",
@@ -73,7 +73,7 @@ def plot_alloc_alpha(
 
         # Deviation from DSO (GREEN)
         plt.plot(
-            alpha_values_np,
+            beta_values_np,
             deviation_np,
             marker="s",
             linestyle="--",
@@ -83,9 +83,9 @@ def plot_alloc_alpha(
 
         # Alternating-color sum curve: blue (envelope) ↔ green (deviation)
         alt_colors = cycle(["blue", "green"])
-        for i in range(len(alpha_values_np) - 1):
+        for i in range(len(beta_values_np) - 1):
             plt.plot(
-                alpha_values_np[i : i + 2],
+                beta_values_np[i : i + 2],
                 total_np[i : i + 2],
                 linestyle=":",
                 linewidth=1.2,
@@ -122,7 +122,7 @@ def plot_alloc_alpha(
         )
 
         # Axis formatting
-        plt.xlabel("$\\alpha$", fontsize="large")
+        plt.xlabel("$\\beta$", fontsize="large")
         plt.ylabel("Power (per-unit)", fontsize="large")
         plt.grid(True)
 
@@ -134,9 +134,10 @@ def plot_alloc_alpha(
         plt.show()
 
     return {
-        "alpha": alpha_values.tolist(),
+        "beta": beta_values.tolist(),
         "envelope": envelope,
         "curtailment": curtail,
         "deviation": deviation,
         "total": total,
     }
+

@@ -38,7 +38,7 @@ def extract_network_data(net: Any) -> Dict[str, Any]:
     else:
         raise AttributeError("Bus positions not available in network.")
 
-    s_base = getattr(net, "sn_mva", 100.0)
+    s_base = 100.0 #MVA
 
     # Gather nodal powers
     P_load = {idx: 0.0 for idx in net.bus.index}
@@ -46,12 +46,13 @@ def extract_network_data(net: Any) -> Dict[str, Any]:
     for _, row in net.load.iterrows():
         P_load[row["bus"]] += row["p_mw"] / s_base
     for _, row in net.gen.iterrows():
-        P_gen[row["bus"]] += row["p_mw"] / s_base
+        P_gen[row["bus"]] += -row["p_mw"] / s_base
     for _, row in net.sgen.iterrows():
-        P_gen[row["bus"]] += row["p_mw"] / s_base
+        P_gen[row["bus"]] += -row["p_mw"] / s_base
     for _, row in net.ext_grid.iterrows():
-        P_gen[row["bus"]] += 70.0 / s_base
-    P = {idx: P_load[idx] - P_gen[idx] for idx in net.bus.index}
+        P_gen[row["bus"]] += -float(row.get("p_mw", 0.0)) / s_base
+    # Net nodal power: positive = consumption, negative = production
+    P = {idx: P_load[idx] + P_gen[idx] for idx in net.bus.index}
 
     return {
         "pos": pos,
@@ -74,7 +75,8 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
     """
 
     G = nx.Graph()
-    G.graph["s_base"] = data["s_base"]
+
+    s_base = 100.0 #MVA
 
     # Nodes
     for idx, row in data["bus"].iterrows():
@@ -93,7 +95,14 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
         u, v = row["from_bus"], row["to_bus"]
         x_ohm = row["x_ohm_per_km"] * row["length_km"]
         V_kv = data["bus"].at[u, "vn_kv"]
-        b_pu = V_kv**2 / (x_ohm * data["s_base"])
+        b_pu = V_kv**2 / (x_ohm * s_base)
+        max_i_ka = row.get("max_i_ka")
+        base_i_ka = s_base / (math.sqrt(3) * V_kv)
+        if max_i_ka is not None and not math.isnan(max_i_ka):
+            I_max_pu = max_i_ka / base_i_ka
+        else:
+            I_max_pu = 10
+        I_min_pu = -I_max_pu
         G.add_edge(
             u,
             v,
@@ -102,8 +111,10 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
             length=row["length_km"],
             std_type=row.get("std_type"),
             x_ohm=x_ohm,
-            max_i_ka=row.get("max_i_ka"),
+            max_i_ka=max_i_ka,
             b_pu=b_pu,
+            I_min_pu=I_min_pu,
+            I_max_pu=I_max_pu,
         )
 
     # Transformers
@@ -144,16 +155,6 @@ def create_graph(net: Any) -> nx.Graph:
 
 
 # Existing helpers remain unchanged
-
-def calculate_current_bounds(G, max_i_ka, v_base):
-    """Compute current limits in per-unit from network data."""
-    base_i_ka = G.graph["s_base"] / (math.sqrt(3) * v_base)
-    if max_i_ka is not None and not math.isnan(max_i_ka):
-        I_max = max_i_ka / base_i_ka
-        I_min = -I_max
-        return I_min, I_max
-    return -1000, 1000, base_i_ka
-
 
 def op_graph(full_graph: nx.DiGraph, operational_nodes: Set[int]) -> nx.DiGraph:
     """Return the subgraph induced by ``operational_nodes``."""
