@@ -11,9 +11,9 @@ from pathlib import Path
 import numpy as np
 
 from viz.plot_utils import plot_relative_curtailment_overcost
-from viz.rel_overcost import run_series_over_alpha_for_overcost
+from overcost_vs_alpha.rel_overcost import run_series_over_alpha_for_overcost
 
-from . import (
+from __init__ import (
     ALPHA_MAX,
     ALPHA_MIN,
     ALPHA_STEP,

@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from viz.plot_utils import parse_alpha_list
-from viz.rel_overcost import relative_overcost_pct
+from overcost_vs_alpha.rel_overcost import relative_overcost_pct
 
 
 def test_relative_overcost_pct():
