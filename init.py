@@ -19,9 +19,9 @@ from viz.plot_powerflow import plot_power_flow
 
 # ---- Paramétrage utilisateur ----
 TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"
-OPERATIONAL_NODES = [0, 1, 2, 3, 4, 5]  # [] => OPF ; sinon => DOE
-PARENT_NODES = [0]
-CHILDREN_NODES = [1, 2, 3, 4, 5]
+OPERATIONAL_NODES = [3, 7, 8, 9, 10, 11, 12, 13, 14]  # [] => OPF ; sinon => DOE
+PARENT_NODES = [3]
+CHILDREN_NODES = [8, 9, 10, 11]
 # Parameters of the objective function
 ALPHA = 2
 BETA = 1
@@ -83,7 +83,7 @@ res = optim_problem(
 )
 
 # Always display the complete graph
-plot_network(res["full_graph"])
+# plot_network(res["full_graph"])
 
 # Display power flows for available models
 if "full" in res:

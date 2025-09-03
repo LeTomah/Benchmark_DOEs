@@ -41,4 +41,4 @@ def plot_DOE(m, filename="Figures/Child_nodes_envelopes.pdf"):
     plt.savefig(filename)
     plt.show()
 
-    plot_curtailment(m)
+    # plot_curtailment(m)
