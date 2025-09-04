@@ -31,6 +31,8 @@ def optim_problem(
     alpha: float = 1.0,
     beta: float = 1.0,
     plot_doe: bool = True,
+    P_min: float = -1.0,
+    P_max: float = 1.0
 ):
     """Run either an OPF or DOE optimisation on the given network.
 
@@ -46,6 +48,9 @@ def optim_problem(
         If ``True`` the DOE result for each run is plotted.  This is mainly
         useful for interactive debugging; when scanning many ``alpha`` values
         the plots can be disabled to avoid cluttering the output.
+    P_min, P_max: float
+        Bounds applied to the power exchanged with parent nodes.  They are
+        passed down to the Pyomo environment construction.
     """
 
     # 1) Charger le réseau et créer le graphe complet
@@ -61,6 +66,8 @@ def optim_problem(
             info_DSO=None,
             alpha=alpha,
             beta=beta,
+            P_min=P_min,
+            P_max=P_max
         )
         m, G = env_full
         copf.apply(m, G)
@@ -91,6 +98,8 @@ def optim_problem(
         info_DSO=info_DSO,
         alpha=alpha,
         beta=beta,
+        P_min=P_min,
+        P_max=P_max
     )
     m, G = env_op
     cdoe.apply(m, G)  # crée m.objective_doe

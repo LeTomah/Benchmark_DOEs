@@ -1,13 +1,39 @@
-"""
-Point d’entrée unique du projet.
-Il suffit de choisir :
-    • le fichier IEEE (.txt)
-    • les nœuds opérationnels
-    • les parents
-    • les enfants
-Et de choisir les options de plot (pour alpha et beta)
+"""Entry point of the project.
 
-puis de lancer :  init.py
+Configure the network and plotting options by editing the parameters below
+before running ``init.py``.
+
+Parameters
+----------
+TEST_CASE : str
+    Path to the network description file (``.txt`` or ``.py``).
+OPERATIONAL_NODES : list[int]
+    Empty list runs an optimal power flow (OPF); otherwise runs a DOE on the
+    specified nodes.
+PARENT_NODES : list[int]
+    Parent nodes that exchange power with the network.
+CHILDREN_NODES : list[int]
+    Children nodes connected to the parents.
+ALPHA, BETA : float
+    Coefficients of the objective function.
+P_MIN, P_MAX : float
+    Bounds for power exchanged at parent nodes.
+PLOT_ALPHA : bool
+    Enable an ``alpha`` sweep with bounds ``ALPHA_MIN``, ``ALPHA_MAX`` and step
+    ``ALPHA_STEP``.
+PLOT_BETA : bool
+    Enable a ``beta`` sweep with bounds ``BETA_MIN``, ``BETA_MAX`` and step
+    ``BETA_STEP``.
+PLOT_NETWORK : bool
+    Display the complete network graph.
+PLOT_POWERFLOW_FULL : bool
+    Display power flows for the full graph.
+PLOT_POWERFLOW_OPERATIONAL : bool
+    Display power flows for the operational subgraph.
+PLOT_DOE : bool
+    Display the DOE scatter plot.
+CHECK_REQ : bool
+    Check Python dependencies before running.
 """
 
 from core.check_requirements import check_packages
@@ -17,14 +43,17 @@ from viz.plot_alloc_beta import plot_alloc_beta
 from viz.plot_network import plot_network
 from viz.plot_powerflow import plot_power_flow
 
-# ---- Paramétrage utilisateur ----
+# ---- User configuration ----
 TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"
-OPERATIONAL_NODES = []  # [] => OPF ; sinon => DOE
-PARENT_NODES = []
-CHILDREN_NODES = []
+OPERATIONAL_NODES = [0, 1, 2, 3, 4, 5]  # [] => OPF ; otherwise => DOE
+PARENT_NODES = [0]
+CHILDREN_NODES = [2, 3, 4]
 # Parameters of the objective function
-ALPHA = 2.05
-BETA = 2.05
+ALPHA = 1.5
+BETA = 1.9
+# Bounds for power exchanged at parent nodes
+P_MIN = -3
+P_MAX = 3
 
 # Optional sweep of alpha to visualise its impact on the optimisation.
 # Set ``PLOT_ALPHA`` to ``True`` to launch :func:`plot_alloc_alpha` with the
@@ -41,6 +70,12 @@ PLOT_BETA = False
 BETA_MIN = 1.5
 BETA_MAX = 3
 BETA_STEP = 0.05
+
+# Select which plots to display
+PLOT_NETWORK = False
+PLOT_POWERFLOW_FULL = True          #For OPF only
+PLOT_POWERFLOW_OPERATIONAL = True   #For DOE only
+PLOT_DOE = True
 # ---------------------------------
 
 CHECK_REQ = False
@@ -80,15 +115,20 @@ res = optim_problem(
     children_nodes=CHILDREN_NODES,
     alpha=ALPHA,
     beta=BETA,
+    P_min=P_MIN,
+    P_max=P_MAX,
+    plot_doe=PLOT_DOE,
 )
 
-# Always display the complete graph
-# plot_network(res["full_graph"])
+# Optional display of the complete graph
+if PLOT_NETWORK:
+    plot_network(res["full_graph"])
 
 # Display power flows for available models
-if "full" in res:
+if PLOT_POWERFLOW_FULL and "full" in res:
     plot_power_flow(res["full"]["model"], res["full"]["graph"], 0, 0)
-if "operational" in res:
+
+if PLOT_POWERFLOW_OPERATIONAL and "operational" in res:
     plot_power_flow(res["operational"]["model"], res["operational"]["graph"], 0, 0)
 
 
