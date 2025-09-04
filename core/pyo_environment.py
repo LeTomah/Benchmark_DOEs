@@ -21,9 +21,16 @@ def build_sets(m, G, parent_nodes, children_nodes):
     m.parents = pyo.Set(initialize=parent_nodes)
     m.children = pyo.Set(initialize=children_nodes)
 
+def build_params(m, G, info_DSO, alpha, beta, P_min, P_max):
+    """Create model parameters.
 
-def build_params(m, G, info_DSO, alpha, beta):
-    """Create model parameters."""
+    Parameters
+    ----------
+    P_min, P_max: float
+        Bounds applied to the power exchanged with parent nodes.  They were
+        previously hard-coded but are now supplied by the caller to ease
+        experimentation.
+    """
     m.P = pyo.Param(
         m.Nodes,
         initialize={n: G.nodes[n].get("P", 0.0) for n in G.nodes},
@@ -50,10 +57,10 @@ def build_params(m, G, info_DSO, alpha, beta):
     m.V_min = pyo.Param(initialize=0.9)
     m.V_max = pyo.Param(initialize=1.1)
     m.V_P = pyo.Param(m.VertV, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
-    m.P_min = pyo.Param(initialize=-0.0)
-    m.P_max = pyo.Param(initialize=0.0)
-    m.theta_min = pyo.Param(initialize=-1)
-    m.theta_max = pyo.Param(initialize=1)
+    m.P_min = pyo.Param(initialize=P_min)
+    m.P_max = pyo.Param(initialize=P_max)
+    m.theta_min = pyo.Param(initialize=-math.pi)
+    m.theta_max = pyo.Param(initialize=math.pi)
     m.alpha = pyo.Param(initialize=alpha)
     m.beta = pyo.Param(initialize=beta)
     m.I_min = pyo.Param(
@@ -108,8 +115,15 @@ def create_pyo_env(
     info_DSO: Optional[Dict[int, float]] = None,
     alpha: float = 1.0,
     beta: float = 1.0,
+    P_min: float = -1.0,
+    P_max: float = 1.0,
 ):
-    """Create and populate a Pyomo model from a NetworkX graph."""
+    """Create and populate a Pyomo model from a NetworkX graph.
+
+    The ``P_min`` and ``P_max`` parameters allow users to specify the bounds on
+    exchanges at parent nodes directly when creating the environment instead of
+    relying on hard-coded defaults.
+    """
 
     G_full = graph
     if operational_nodes is None:
@@ -122,7 +136,7 @@ def create_pyo_env(
 
     m = pyo.ConcreteModel()
     build_sets(m, G, parent_nodes or [operational_nodes[0]], children_nodes or [])
-    build_params(m, G, info_DSO or {}, alpha, beta)
+    build_params(m, G, info_DSO or {}, alpha, beta, P_min, P_max)
     build_variables(m, G)
     build_expressions(m, G)
 

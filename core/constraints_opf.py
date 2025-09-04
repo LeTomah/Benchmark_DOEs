@@ -18,11 +18,11 @@ def apply(m, G):
     """Apply OPF constraints and objective to model ``m``."""
 
     add_curtailment_abs(m)
-    add_current_bounds(m, G)
+    add_current_bounds(m)
     add_dc_flow_constraints(m, G)
     add_current_definition(m)
     add_phase_bounds(m)
-    add_power_balance(m, G)
+    add_power_balance(m)
     add_parent_power_bounds(m)
     add_voltage_vertices(m)
 

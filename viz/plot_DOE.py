@@ -36,9 +36,9 @@ def plot_DOE(m, filename="Figures/Child_nodes_envelopes.pdf"):
     plt.xticks(x, children)
     plt.xlabel("Child Node Index")
     plt.ylabel("Power [p.u.]")
-    plt.legend(loc="upper left")
+    plt.legend(loc="upper center", bbox_to_anchor=(0.5, 1.13))
     plt.grid(True)
     plt.savefig(filename)
     plt.show()
 
-    plot_curtailment(m)
+    # plot_curtailment(m)
