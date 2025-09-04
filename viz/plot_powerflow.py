@@ -65,7 +65,7 @@ def plot_power_flow(m, G, i, j, filename="Figures/Powerflow.pdf"):
         else:
             plt.text(x, y, text, fontsize=8, ha="center", va="center", color="black")
 
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=7, label_pos=0.3)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=7, label_pos=0.5)
 
     plt.title(f"Power Flow [p.u.] for i={i}, j={j}")
     plt.axis("equal")

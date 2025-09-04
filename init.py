@@ -19,28 +19,28 @@ from viz.plot_powerflow import plot_power_flow
 
 # ---- Paramétrage utilisateur ----
 TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"
-OPERATIONAL_NODES = [3, 7, 8, 9, 10, 11, 12, 13, 14]  # [] => OPF ; sinon => DOE
-PARENT_NODES = [3]
-CHILDREN_NODES = [8, 9, 10, 11]
+OPERATIONAL_NODES = []  # [] => OPF ; sinon => DOE
+PARENT_NODES = []
+CHILDREN_NODES = []
 # Parameters of the objective function
-ALPHA = 2
-BETA = 1
+ALPHA = 2.05
+BETA = 2.05
 
 # Optional sweep of alpha to visualise its impact on the optimisation.
 # Set ``PLOT_ALPHA`` to ``True`` to launch :func:`plot_alloc_alpha` with the
 # following bounds and step.
 PLOT_ALPHA = False
-ALPHA_MIN = 0.0
-ALPHA_MAX = 10.0
-ALPHA_STEP = 1
+ALPHA_MIN = 1.75
+ALPHA_MAX = 3
+ALPHA_STEP = 0.05
 
 # Optional sweep of beta to visualise its impact on the optimisation.
 # Set ``PLOT_BETA`` to ``True`` to launch :func:`plot_alloc_beta` with the
 # following bounds and step.
 PLOT_BETA = False
-BETA_MIN = 1.0
-BETA_MAX = 4.0
-BETA_STEP = 0.1
+BETA_MIN = 1.5
+BETA_MAX = 3
+BETA_STEP = 0.05
 # ---------------------------------
 
 CHECK_REQ = False
