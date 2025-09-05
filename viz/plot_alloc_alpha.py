@@ -58,7 +58,7 @@ def plot_alloc_alpha(
             marker="o",
             linestyle="-",
             color="blue",
-            label="Envelope Volume",
+            label="Envelope volume",
         )
 
         # Curtailment (ORANGE)
@@ -78,7 +78,7 @@ def plot_alloc_alpha(
             marker="s",
             linestyle="--",
             color="green",
-            label="Deviation of the center of the envelope from DSO estimation",
+            label="Distance to estimation",
         )
 
         # Alternating-color sum curve: blue (envelope) ↔ green (deviation)
@@ -106,7 +106,7 @@ def plot_alloc_alpha(
         # Add custom alternating-color entry
         handles.append(custom_sum_handle)
         labels.append(
-            "Deviation of the center of the envelope from DSO estimation + Envelope Volume"
+            "Distance to estimation + Envelope volume"
         )
 
         # Place legend below the plot, centered
