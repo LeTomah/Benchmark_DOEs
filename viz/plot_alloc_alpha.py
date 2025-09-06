@@ -39,7 +39,7 @@ def plot_alloc_alpha(
 
         m = res["model"]
         G = res.get("graph")
-        s_base = 1.0
+        s_base = 100.0
         if G is not None:
             s_base = float(getattr(G, "graph", {}).get("s_base", 1.0))
 
