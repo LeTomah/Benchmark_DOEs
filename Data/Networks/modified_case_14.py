@@ -97,8 +97,6 @@ if __name__ == "__main__":
     if not net.line.empty:
         print("\nmax_i_ka (lignes):")
         print(net.line[["from_bus", "to_bus", "max_i_ka"]])
-    print(net.load["bus", "p_mw"])
-    print(net.sgen["bus", "p_mw"])
     tot_load = net.load["p_mw"].sum() if not net.load.empty else 0.0
     tot_sgen = net.sgen["p_mw"].sum() if "sgen" in net and not net.sgen.empty else 0.0
     print(f"\nTotal consommation (loads): {tot_load:.4f} MW")

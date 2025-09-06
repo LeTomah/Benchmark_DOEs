@@ -9,7 +9,7 @@ def check_packages(requirements_file: str = "Data/requirements.txt", show_versio
 
     No installation is performed; missing packages are reported to the user.
     """
-    requirements_path = Path(__file__).parent / requirements_file
+    requirements_path = Path(__file__).parent.parent / requirements_file
     with open(requirements_path, "r") as file:
         packages = [line.strip() for line in file if line.strip() and not line.startswith("#")]
     for pkg in packages:
