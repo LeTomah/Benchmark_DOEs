@@ -49,9 +49,9 @@ if CHECK_REQ:
     check_packages()
 
 TEST_CASE = "Data/Networks/modified_case_14.py"
-OPERATIONAL_NODES = []  # [] => OPF ; otherwise => DOE
-PARENT_NODES = []
-CHILDREN_NODES = []
+OPERATIONAL_NODES = [0, 1, 2, 3, 4]  # [] => OPF ; otherwise => DOE
+PARENT_NODES = [0]
+CHILDREN_NODES = [3, 4]
 # Parameters of the objective function
 ALPHA = 1
 BETA = 1
@@ -76,7 +76,7 @@ BETA_MAX = 3
 BETA_STEP = 0.1
 
 # Select which plots to display
-PLOT_NETWORK = False
+PLOT_NETWORK = True
 PLOT_POWERFLOW_FULL = False          #For OPF only
 PLOT_POWERFLOW_OPERATIONAL = False   #For DOE only
 PLOT_DOE = False
