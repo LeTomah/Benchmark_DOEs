@@ -53,7 +53,7 @@ OPERATIONAL_NODES = [0, 1, 2, 3, 4]  # [] => OPF ; otherwise => DOE
 PARENT_NODES = [0]
 CHILDREN_NODES = [3, 4]
 # Parameters of the objective function
-ALPHA = 2.1
+ALPHA = 1
 BETA = 4
 # Bounds for power exchanged at parent nodes
 P_MIN = -0.3
@@ -62,7 +62,7 @@ P_MAX = 0.3
 # Optional sweep of alpha to visualise its impact on the optimisation.
 # Set ``PLOT_ALPHA`` to ``True`` to launch :func:`plot_alloc_alpha` with the
 # following bounds and step.
-PLOT_ALPHA = True
+PLOT_ALPHA = False
 ALPHA_MIN = 2
 ALPHA_MAX = 2.5
 ALPHA_STEP = 0.1
