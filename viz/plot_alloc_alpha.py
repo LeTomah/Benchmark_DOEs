@@ -36,10 +36,16 @@ def plot_alloc_alpha(
             beta=beta,
             plot_doe=False,
         )["operational"]
+
         m = res["model"]
-        envelope.append(float(m.envelope_volume.value))
-        curtail.append(float(m.curtailment_budget.value))
-        deviation.append(float(m.envelope_center_gap.value))
+        G = res.get("graph")
+        s_base = 1.0
+        if G is not None:
+            s_base = float(getattr(G, "graph", {}).get("s_base", 1.0))
+
+        envelope.append(float(m.envelope_volume.value) / s_base)
+        curtail.append(float(m.curtailment_budget.value) / s_base)
+        deviation.append(float(m.envelope_center_gap.value) / s_base)
         total.append(envelope[-1] + deviation[-1])
 
     if show:

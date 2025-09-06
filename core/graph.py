@@ -78,8 +78,11 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
 
     G = nx.Graph()
 
-    # Nodes (powers converted to per-unit)
+    # Store system base power for unit conversions
     s_base = data["s_base"]
+    G.graph["s_base"] = s_base
+
+    # Nodes (powers converted to per-unit)
     for idx, row in data["bus"].iterrows():
         G.add_node(
             idx,
