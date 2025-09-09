@@ -1,27 +1,42 @@
 """Lightweight dependency checker."""
 
+import subprocess
+import sys
 from importlib import import_module
 from pathlib import Path
 
 
-def check_packages(requirements_file: str = "Data/requirements.txt", show_versions: bool = False) -> None:
-    """Check presence of packages listed in ``requirements_file``.
+def check_packages(
+    requirements_file: str = "Data/requirements.txt",
+    show_versions: bool = False,
+    install_missing: bool = True,
+) -> None:
+    """Check presence of packages listed in ``requirements_file`` and install missing ones.
 
-    No installation is performed; missing packages are reported to the user.
+    If a package is missing and ``install_missing`` is True, it will be installed via ``pip``.
     """
     requirements_path = Path(__file__).parent.parent / requirements_file
-    with open(requirements_path, "r") as file:
-        packages = [line.strip() for line in file if line.strip() and not line.startswith("#")]
+    with open(requirements_path, "r", encoding="utf-8") as file:
+        packages = [
+            line.strip() for line in file if line.strip() and not line.startswith("#")
+        ]
     for pkg in packages:
         try:
             module = import_module(pkg)
-            if show_versions:
-                version = getattr(module, "__version__", "unknown")
-                print(f"{pkg}: {version}")
-            else:
-                print(f"{pkg} présent")
         except Exception:
             print(f"{pkg} manquant")
+            if install_missing:
+                try:
+                    subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
+                    module = import_module(pkg)
+                except Exception as exc:  # pragma: no cover - installation error
+                    print(f"Installation failed for {pkg}: {exc}")
+                    continue
+        if show_versions:
+            version = getattr(module, "__version__", "unknown")
+            print(f"{pkg}: {version}")
+        else:
+            print(f"{pkg} présent")
 
 
 if __name__ == "__main__":
