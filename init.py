@@ -94,6 +94,8 @@ if PLOT_ALPHA:
         alpha_min=ALPHA_MIN,
         alpha_max=ALPHA_MAX,
         alpha_step=ALPHA_STEP,
+        P_min=P_MIN,
+        P_max=P_MAX,
     )
 
 if PLOT_BETA:
@@ -106,6 +108,8 @@ if PLOT_BETA:
         beta_min=BETA_MIN,
         beta_max=BETA_MAX,
         beta_step=BETA_STEP,
+        P_min=P_MIN,
+        P_max=P_MAX,
     )
 
 res = optim_problem(

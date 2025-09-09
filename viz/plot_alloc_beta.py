@@ -20,10 +20,20 @@ def plot_alloc_beta(
     beta_min: float = 0.0,
     beta_max: float = 1.0,
     beta_step: float = 0.1,
+    P_min: float = -1.0,
+    P_max: float = 1.0,
     show: bool = True,
     filename: str = "Figures/DOE_alloc_beta_final.pdf",
 ):
-    """Run the optimisation for several ``beta`` values and optionally plot metrics."""
+    """Run the optimisation for several ``beta`` values and optionally plot metrics.
+
+    Parameters
+    ----------
+    P_min, P_max: float, optional
+        Bounds applied to the power exchanged with parent nodes.  They are
+        forwarded to :func:`core.optimization.optim_problem` so that envelope
+        sizes match those shown by :func:`viz.plot_DOE.plot_DOE`.
+    """
 
     from core.optimization import optim_problem  # local import to avoid cycle
 
@@ -38,6 +48,8 @@ def plot_alloc_beta(
             children_nodes=children_nodes,
             alpha=alpha,
             beta=float(beta),
+            P_min=P_min,
+            P_max=P_max,
             plot_doe=False,
         )["operational"]
         m = res["model"]
