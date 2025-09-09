@@ -2,6 +2,9 @@
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import scienceplots  # noqa: F401
+
+plt.style.use(["science", "no-latex"])
 
 
 def plot_network(
