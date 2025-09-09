@@ -1,10 +1,14 @@
 """Sweep alpha values and plot resulting metrics."""
 
+from itertools import cycle
+
 import matplotlib.pyplot as plt
 import numpy as np
-from itertools import cycle
-from matplotlib.lines import Line2D
+import scienceplots  # noqa: F401
 from matplotlib.legend_handler import HandlerTuple
+from matplotlib.lines import Line2D
+
+plt.style.use(["science", "no-latex"])
 
 
 def plot_alloc_alpha(

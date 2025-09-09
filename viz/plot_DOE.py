@@ -2,8 +2,9 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import scienceplots  # noqa: F401
 
-from .plot_curtailment import plot_curtailment
+plt.style.use(["science", "no-latex"])
 
 
 def plot_DOE(m, filename="Figures/Child_nodes_envelopes.pdf"):
@@ -41,4 +42,6 @@ def plot_DOE(m, filename="Figures/Child_nodes_envelopes.pdf"):
     plt.savefig(filename)
     plt.show()
 
+    # To plot curtailment details, uncomment the following line:
+    # from .plot_curtailment import plot_curtailment
     # plot_curtailment(m)
