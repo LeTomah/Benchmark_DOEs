@@ -6,3 +6,4 @@ gurobipy
 numpy
 pandas
 shapely
+scienceplots

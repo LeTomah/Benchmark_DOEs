@@ -96,7 +96,10 @@ def build_variables(m, G):
     m.curt = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.Reals)
     m.aux = pyo.Var(m.children, domain=pyo.Reals)
     m.envelope_volume = pyo.Var(domain=pyo.Reals)
-    m.curtailment_budget = pyo.Var(domain=pyo.NonNegativeReals)
+    #Curtailment budget
+    total_p_abs = sum(abs(pyo.value(m.P[n])) for n in m.Nodes)
+    m.curtailment_budget = pyo.Var(domain=pyo.NonNegativeReals, bounds=(0, total_p_abs))
+
     m.diff_DSO = pyo.Var(m.children, domain=pyo.NonNegativeReals)
     m.envelope_center_gap = pyo.Var(domain=pyo.Reals)
 
