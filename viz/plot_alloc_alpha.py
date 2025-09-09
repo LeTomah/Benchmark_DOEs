@@ -20,10 +20,20 @@ def plot_alloc_alpha(
     alpha_min: float = 0.0,
     alpha_max: float = 1.0,
     alpha_step: float = 0.1,
+    P_min: float = -1.0,
+    P_max: float = 1.0,
     show: bool = True,
     filename: str = "Figures/DOE_alloc_alpha_final.pdf",
 ):
-    """Run the optimisation for several ``alpha`` values and optionally plot metrics."""
+    """Run the optimisation for several ``alpha`` values and optionally plot metrics.
+
+    Parameters
+    ----------
+    P_min, P_max: float, optional
+        Bounds applied to the power exchanged with parent nodes.  They are
+        forwarded to :func:`core.optimization.optim_problem` so that envelope
+        sizes match those shown by :func:`viz.plot_DOE.plot_DOE`.
+    """
 
     from core.optimization import optim_problem  # local import to avoid cycle
 
@@ -38,18 +48,16 @@ def plot_alloc_alpha(
             children_nodes=children_nodes,
             alpha=float(alpha),
             beta=beta,
+            P_min=P_min,
+            P_max=P_max,
             plot_doe=False,
         )["operational"]
 
         m = res["model"]
-        G = res.get("graph")
-        s_base = 100.0
-        if G is not None:
-            s_base = float(getattr(G, "graph", {}).get("s_base", 1.0))
 
-        envelope.append(float(m.envelope_volume.value) / s_base)
-        curtail.append(float(m.curtailment_budget.value) / s_base)
-        deviation.append(float(m.envelope_center_gap.value) / s_base)
+        envelope.append(float(m.envelope_volume.value))
+        curtail.append(float(m.curtailment_budget.value))
+        deviation.append(float(m.envelope_center_gap.value))
         total.append(envelope[-1] + deviation[-1])
 
     if show:
