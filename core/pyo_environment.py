@@ -59,8 +59,8 @@ def build_params(m, G, info_DSO, alpha, beta, P_min, P_max):
     m.V_P = pyo.Param(m.VertV, initialize={0: 0.9, 1: 1.1}, domain=pyo.NonNegativeReals)
     m.P_min = pyo.Param(initialize=P_min)
     m.P_max = pyo.Param(initialize=P_max)
-    m.theta_min = pyo.Param(initialize=-1)
-    m.theta_max = pyo.Param(initialize=1)
+    m.theta_min = pyo.Param(initialize=-math.pi)
+    m.theta_max = pyo.Param(initialize=math.pi)
     m.alpha = pyo.Param(initialize=alpha)
     m.beta = pyo.Param(initialize=beta)
     m.I_min = pyo.Param(
@@ -98,7 +98,7 @@ def build_variables(m, G):
     m.envelope_volume = pyo.Var(domain=pyo.Reals)
     #Curtailment budget
     total_p_abs = sum(abs(pyo.value(m.P[n])) for n in m.Nodes)
-    m.curtailment_budget = pyo.Var(domain=pyo.NonNegativeReals, bounds=(0, total_p_abs))
+    m.curtailment_budget = pyo.Var(domain=pyo.NonNegativeReals, bounds=(-total_p_abs, total_p_abs))
 
     m.diff_DSO = pyo.Var(m.children, domain=pyo.NonNegativeReals)
     m.envelope_center_gap = pyo.Var(domain=pyo.Reals)

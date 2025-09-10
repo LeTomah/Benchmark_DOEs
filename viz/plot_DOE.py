@@ -7,15 +7,14 @@ import scienceplots  # noqa: F401
 plt.style.use(["science", "no-latex"])
 
 
-def plot_DOE(m, filename="Figures/Child_nodes_envelopes.pdf"):
+def plot_DOE(m, filename="Figures/DOE.pdf"):
     """Plot power envelope and DSO estimation for child nodes."""
 
     children = list(m.children)
     p0 = [getattr(m.P_C_set[n, 0], "value", m.P_C_set[n, 0]) for n in children]
     p1 = [getattr(m.P_C_set[n, 1], "value", m.P_C_set[n, 1]) for n in children]
     info = [getattr(m.info_DSO_param[n], "value", m.info_DSO_param[n]) for n in children]
-    x = np.arange(len(children)) * 5e-4
-
+    x = np.arange(len(children))
 
     plt.figure(figsize=(5, 6))
     for xs, hi, lo in zip(x, p0, p1):

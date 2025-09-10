@@ -23,7 +23,7 @@ def plot_alloc_beta(
     P_min: float = -1.0,
     P_max: float = 1.0,
     show: bool = True,
-    filename: str = "Figures/DOE_alloc_beta_final.pdf",
+    filename: str = "Figures/Plot_beta.pdf",
 ):
     """Run the optimisation for several ``beta`` values and optionally plot metrics.
 
@@ -97,34 +97,6 @@ def plot_alloc_beta(
             label="Distance to estimation",
         )
 
-        # Alternating-color sum curve: blue (envelope) ↔ green (deviation)
-        alt_colors = cycle(["blue", "green"])
-        for i in range(len(beta_values_np) - 1):
-            plt.plot(
-                beta_values_np[i : i + 2],
-                total_np[i : i + 2],
-                linestyle=":",
-                linewidth=1.2,
-                alpha=0.9,
-                color=next(alt_colors),
-                zorder=2,
-            )
-
-        # Custom legend entry for alternating curve (overlay, no gap)
-        custom_sum_handle = (
-            Line2D([0, 1], [0, 0], color="blue", linestyle=":", linewidth=1.5),
-            Line2D([0, 1], [0, 0], color="green", linestyle=":", linewidth=1.5),
-        )
-
-        # Collect existing legend entries
-        handles, labels = plt.gca().get_legend_handles_labels()
-
-        # Add custom alternating-color entry
-        handles.append(custom_sum_handle)
-        labels.append(
-            "Distance to estimation + Envelope Volume"
-        )
-
         # Place legend below the plot, centered
         plt.legend(
             handles,
@@ -132,14 +104,14 @@ def plot_alloc_beta(
             handler_map={tuple: HandlerTuple(ndivide=None, pad=0)},
             loc="upper center",
             bbox_to_anchor=(0.5, -0.15),
-            ncol=2,
+            ncol=3,
             frameon=False,
-            fontsize="large",
+            fontsize="xx-large",
         )
 
         # Axis formatting
-        plt.xlabel("$\\beta$", fontsize="large")
-        plt.ylabel("Power (per-unit)", fontsize="large")
+        plt.xlabel("$\\beta$", fontsize="xx-large")
+        plt.ylabel("Power (per-unit)", fontsize="xx-large")
         plt.grid(True)
 
         # Adjust layout so legend fits underneath

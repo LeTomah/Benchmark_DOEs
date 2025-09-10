@@ -44,35 +44,35 @@ from viz.plot_network import plot_network
 from viz.plot_powerflow import plot_power_flow
 
 # ---- User configuration ----
-CHECK_REQ = True
+CHECK_REQ = False
 if CHECK_REQ:
     check_packages()
 
-TEST_CASE = "Data/Networks/modified_case_14.py"
-OPERATIONAL_NODES = [0, 1, 2, 3, 4]  # [] => OPF ; otherwise => DOE
-PARENT_NODES = [0]
-CHILDREN_NODES = [3, 4]
+TEST_CASE = "Data/Networks/example_multivoltage_adapted.py"
+OPERATIONAL_NODES = [11, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]  # [] => OPF ; otherwise => DOE
+PARENT_NODES = [11]
+CHILDREN_NODES = [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
 # Parameters of the objective function
-ALPHA = 1
-BETA = 1
+ALPHA = 2.05
+BETA = 2.05
 # Bounds for power exchanged at parent nodes
-P_MIN = -0.3
-P_MAX = 0.3
+P_MIN = -0.28231
+P_MAX = 0.27873
 
 # Optional sweep of alpha to visualise its impact on the optimisation.
 # Set ``PLOT_ALPHA`` to ``True`` to launch :func:`plot_alloc_alpha` with the
 # following bounds and step.
 PLOT_ALPHA = True
 ALPHA_MIN = 0.1
-ALPHA_MAX = 2.5
+ALPHA_MAX = 1
 ALPHA_STEP = 0.1
 
 # Optional sweep of beta to visualise its impact on the optimisation.
 # Set ``PLOT_BETA`` to ``True`` to launch :func:`plot_alloc_beta` with the
 # following bounds and step.
 PLOT_BETA = False
-BETA_MIN = 0
-BETA_MAX = 3
+BETA_MIN = 0.1
+BETA_MAX = 2.5
 BETA_STEP = 0.1
 
 # Select which plots to display
