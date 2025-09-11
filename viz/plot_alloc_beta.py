@@ -1,10 +1,14 @@
 """Sweep beta values and plot resulting metrics."""
 
+from itertools import cycle
+
 import matplotlib.pyplot as plt
 import numpy as np
-from itertools import cycle
-from matplotlib.lines import Line2D
+import scienceplots  # noqa: F401
 from matplotlib.legend_handler import HandlerTuple
+from matplotlib.lines import Line2D
+
+plt.style.use(["science", "no-latex"])
 
 
 def plot_alloc_beta(
@@ -16,10 +20,20 @@ def plot_alloc_beta(
     beta_min: float = 0.0,
     beta_max: float = 1.0,
     beta_step: float = 0.1,
+    P_min: float = -1.0,
+    P_max: float = 1.0,
     show: bool = True,
-    filename: str = "Figures/DOE_alloc_beta_final.pdf",
+    filename: str = "Figures/Plot_beta.pdf",
 ):
-    """Run the optimisation for several ``beta`` values and optionally plot metrics."""
+    """Run the optimisation for several ``beta`` values and optionally plot metrics.
+
+    Parameters
+    ----------
+    P_min, P_max: float, optional
+        Bounds applied to the power exchanged with parent nodes.  They are
+        forwarded to :func:`core.optimization.optim_problem` so that envelope
+        sizes match those shown by :func:`viz.plot_DOE.plot_DOE`.
+    """
 
     from core.optimization import optim_problem  # local import to avoid cycle
 
@@ -34,6 +48,8 @@ def plot_alloc_beta(
             children_nodes=children_nodes,
             alpha=alpha,
             beta=float(beta),
+            P_min=P_min,
+            P_max=P_max,
             plot_doe=False,
         )["operational"]
         m = res["model"]
@@ -49,13 +65,14 @@ def plot_alloc_beta(
         deviation_np = np.array(deviation, dtype=float)
         total_np = np.array(total, dtype=float)
 
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(8, 5))
 
         # Envelope Volume (BLUE)
         plt.plot(
             beta_values_np,
             envelope_np,
             marker="o",
+            markersize=4,
             linestyle="-",
             color="blue",
             label="Envelope Volume",
@@ -66,6 +83,7 @@ def plot_alloc_beta(
             beta_values_np,
             curtail_np,
             marker="x",
+            markersize=4,
             linestyle="--",
             color="orange",
             label="Curtailment",
@@ -76,38 +94,14 @@ def plot_alloc_beta(
             beta_values_np,
             deviation_np,
             marker="s",
+            markersize=4,
             linestyle="--",
             color="green",
             label="Distance to estimation",
         )
 
-        # Alternating-color sum curve: blue (envelope) ↔ green (deviation)
-        alt_colors = cycle(["blue", "green"])
-        for i in range(len(beta_values_np) - 1):
-            plt.plot(
-                beta_values_np[i : i + 2],
-                total_np[i : i + 2],
-                linestyle=":",
-                linewidth=1.2,
-                alpha=0.9,
-                color=next(alt_colors),
-                zorder=2,
-            )
-
-        # Custom legend entry for alternating curve (overlay, no gap)
-        custom_sum_handle = (
-            Line2D([0, 1], [0, 0], color="blue", linestyle=":", linewidth=1.5),
-            Line2D([0, 1], [0, 0], color="green", linestyle=":", linewidth=1.5),
-        )
-
         # Collect existing legend entries
         handles, labels = plt.gca().get_legend_handles_labels()
-
-        # Add custom alternating-color entry
-        handles.append(custom_sum_handle)
-        labels.append(
-            "Distance to estimation + Envelope Volume"
-        )
 
         # Place legend below the plot, centered
         plt.legend(
@@ -116,14 +110,14 @@ def plot_alloc_beta(
             handler_map={tuple: HandlerTuple(ndivide=None, pad=0)},
             loc="upper center",
             bbox_to_anchor=(0.5, -0.15),
-            ncol=2,
+            ncol=3,
             frameon=False,
-            fontsize="large",
+            fontsize="x-large",
         )
 
         # Axis formatting
-        plt.xlabel("$\\beta$", fontsize="large")
-        plt.ylabel("Power (per-unit)", fontsize="large")
+        plt.xlabel("$\\beta$", fontsize="xx-large")
+        plt.ylabel("Power (per-unit)", fontsize="xx-large")
         plt.grid(True)
 
         # Adjust layout so legend fits underneath

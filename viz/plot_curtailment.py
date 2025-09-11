@@ -2,6 +2,9 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import scienceplots  # noqa: F401
+
+plt.style.use(["science", "no-latex"])
 
 
 def plot_curtailment(m, filename="Figures/Child_nodes_curtailment.pdf"):

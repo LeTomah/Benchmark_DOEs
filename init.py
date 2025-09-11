@@ -49,37 +49,37 @@ if CHECK_REQ:
     check_packages()
 
 TEST_CASE = "Data/Networks/modified_case_14.py"
-OPERATIONAL_NODES = []  # [] => OPF ; otherwise => DOE
-PARENT_NODES = []
-CHILDREN_NODES = []
+OPERATIONAL_NODES = [4, 5, 9, 10, 11, 12]  # [] => OPF ; otherwise => DOE
+PARENT_NODES = [0]
+CHILDREN_NODES = [9, 10, 11, 12]
 # Parameters of the objective function
-ALPHA = 1
+ALPHA = 1.5
 BETA = 1
 # Bounds for power exchanged at parent nodes
-P_MIN = -0.3
-P_MAX = 0.3
+P_MIN = -0.00183
+P_MAX = 0.00136
 
 # Optional sweep of alpha to visualise its impact on the optimisation.
 # Set ``PLOT_ALPHA`` to ``True`` to launch :func:`plot_alloc_alpha` with the
 # following bounds and step.
-PLOT_ALPHA = False
-ALPHA_MIN = 2
+PLOT_ALPHA = True
+ALPHA_MIN = 1
 ALPHA_MAX = 2.5
-ALPHA_STEP = 0.1
+ALPHA_STEP = 0.05
 
 # Optional sweep of beta to visualise its impact on the optimisation.
 # Set ``PLOT_BETA`` to ``True`` to launch :func:`plot_alloc_beta` with the
 # following bounds and step.
 PLOT_BETA = False
-BETA_MIN = 0
-BETA_MAX = 3
-BETA_STEP = 0.1
+BETA_MIN = 0.5
+BETA_MAX = 2.5
+BETA_STEP = 0.05
 
 # Select which plots to display
 PLOT_NETWORK = False
 PLOT_POWERFLOW_FULL = False          #For OPF only
 PLOT_POWERFLOW_OPERATIONAL = False   #For DOE only
-PLOT_DOE = False
+PLOT_DOE = True
 # ---------------------------------
 
 # Optionally scan multiple ``alpha`` values and display the resulting metrics
@@ -94,6 +94,8 @@ if PLOT_ALPHA:
         alpha_min=ALPHA_MIN,
         alpha_max=ALPHA_MAX,
         alpha_step=ALPHA_STEP,
+        P_min=P_MIN,
+        P_max=P_MAX,
     )
 
 if PLOT_BETA:
@@ -106,6 +108,8 @@ if PLOT_BETA:
         beta_min=BETA_MIN,
         beta_max=BETA_MAX,
         beta_step=BETA_STEP,
+        P_min=P_MIN,
+        P_max=P_MAX,
     )
 
 res = optim_problem(
