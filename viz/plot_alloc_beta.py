@@ -65,13 +65,14 @@ def plot_alloc_beta(
         deviation_np = np.array(deviation, dtype=float)
         total_np = np.array(total, dtype=float)
 
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(8, 5))
 
         # Envelope Volume (BLUE)
         plt.plot(
             beta_values_np,
             envelope_np,
             marker="o",
+            markersize=4,
             linestyle="-",
             color="blue",
             label="Envelope Volume",
@@ -82,6 +83,7 @@ def plot_alloc_beta(
             beta_values_np,
             curtail_np,
             marker="x",
+            markersize=4,
             linestyle="--",
             color="orange",
             label="Curtailment",
@@ -92,10 +94,14 @@ def plot_alloc_beta(
             beta_values_np,
             deviation_np,
             marker="s",
+            markersize=4,
             linestyle="--",
             color="green",
             label="Distance to estimation",
         )
+
+        # Collect existing legend entries
+        handles, labels = plt.gca().get_legend_handles_labels()
 
         # Place legend below the plot, centered
         plt.legend(
@@ -106,7 +112,7 @@ def plot_alloc_beta(
             bbox_to_anchor=(0.5, -0.15),
             ncol=3,
             frameon=False,
-            fontsize="xx-large",
+            fontsize="x-large",
         )
 
         # Axis formatting

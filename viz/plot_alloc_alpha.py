@@ -67,7 +67,7 @@ def plot_alloc_alpha(
         deviation_np = np.array(deviation, dtype=float)
         total_np = np.array(total, dtype=float)
 
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(8, 5))
 
         # Envelope Volume (BLUE)
         plt.plot(
@@ -111,7 +111,7 @@ def plot_alloc_alpha(
             bbox_to_anchor=(0.5, -0.15),
             ncol=3,
             frameon=False,
-            fontsize="xx-large",
+            fontsize="x-large",
         )
 
         # Axis formatting

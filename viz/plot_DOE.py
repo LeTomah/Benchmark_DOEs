@@ -16,7 +16,7 @@ def plot_DOE(m, filename="Figures/DOE.pdf"):
     info = [getattr(m.info_DSO_param[n], "value", m.info_DSO_param[n]) for n in children]
     x = np.arange(len(children))
 
-    plt.figure(figsize=(5, 6))
+    plt.figure(figsize=(5, 5))
     for xs, hi, lo in zip(x, p0, p1):
         plt.plot([xs, xs], [lo, hi], "o-", color="blue")
     plt.plot(x, info, "s", label="DSO power demand estimation")
