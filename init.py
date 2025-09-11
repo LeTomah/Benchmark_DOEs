@@ -48,7 +48,7 @@ CHECK_REQ = False
 if CHECK_REQ:
     check_packages()
 
-TEST_CASE = "Data/Networks/modified_case_14.py"
+TEST_CASE = "data/Networks/modified_case_14.py"
 OPERATIONAL_NODES = [4, 5, 9, 10, 11, 12]  # [] => OPF ; otherwise => DOE
 PARENT_NODES = [0]
 CHILDREN_NODES = [9, 10, 11, 12]

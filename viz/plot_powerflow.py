@@ -7,7 +7,7 @@ import scienceplots  # noqa: F401
 plt.style.use(["science", "no-latex"])
 
 
-def plot_power_flow(m, G, i, j, filename="Figures/Powerflow.pdf"):
+def plot_power_flow(m, G, i, j, filename="figures/Powerflow.pdf"):
     """Visualise power flows and nodal bounds for a given scenario."""
 
     pos = nx.get_node_attributes(G, "pos")

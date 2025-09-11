@@ -7,7 +7,7 @@ import scienceplots  # noqa: F401
 plt.style.use(["science", "no-latex"])
 
 
-def plot_curtailment(m, filename="Figures/Child_nodes_curtailment.pdf"):
+def plot_curtailment(m, filename="figures/Child_nodes_curtailment.pdf"):
     """Plot power envelope and curtailment for child nodes.
 
     For each child node, draw a vertical segment representing the active

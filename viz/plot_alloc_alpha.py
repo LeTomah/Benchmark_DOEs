@@ -23,7 +23,7 @@ def plot_alloc_alpha(
     P_min: float = -1.0,
     P_max: float = 1.0,
     show: bool = True,
-    filename: str = "Figures/Plot_alpha.pdf",
+    filename: str = "figures/Plot_alpha.pdf",
 ):
     """Run the optimisation for several ``alpha`` values and optionally plot metrics.
 

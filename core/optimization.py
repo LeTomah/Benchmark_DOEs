@@ -1,7 +1,7 @@
 import gurobipy as gp
 import pyomo.environ as pyo
 
-from Data.gurobi_config import get_wls_params
+from data.gurobi_config import get_wls_params
 from viz.plot_DOE import plot_DOE
 
 from . import constraints_doe as cdoe, constraints_opf as copf, graph, pyo_environment

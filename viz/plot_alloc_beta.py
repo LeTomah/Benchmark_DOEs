@@ -23,7 +23,7 @@ def plot_alloc_beta(
     P_min: float = -1.0,
     P_max: float = 1.0,
     show: bool = True,
-    filename: str = "Figures/Plot_beta.pdf",
+    filename: str = "figures/Plot_beta.pdf",
 ):
     """Run the optimisation for several ``beta`` values and optionally plot metrics.
 

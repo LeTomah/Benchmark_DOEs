@@ -68,4 +68,4 @@ def load_network(test_case):
 
 
 if __name__ == "__main__":
-    load_network("Data/Networks/network_test.py")
+    load_network("data/Networks/network_test.py")

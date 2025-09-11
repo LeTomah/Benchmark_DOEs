@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def check_packages(
-    requirements_file: str = "Data/requirements.txt",
+    requirements_file: str = "data/requirements.txt",
     show_versions: bool = False,
     install_missing: bool = True,
 ) -> None:

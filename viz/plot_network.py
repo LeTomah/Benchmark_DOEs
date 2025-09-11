@@ -11,7 +11,7 @@ def plot_network(
     G,
     labels=None,
     node_colors=None,
-    filename="Figures/Full_network.pdf",
+    filename="figures/Full_network.pdf",
     dpi: int = 300,
 ):
     """Plot a networkx graph with node power information.

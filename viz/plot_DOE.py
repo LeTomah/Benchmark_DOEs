@@ -7,7 +7,7 @@ import scienceplots  # noqa: F401
 plt.style.use(["science", "no-latex"])
 
 
-def plot_DOE(m, filename="Figures/DOE.pdf"):
+def plot_DOE(m, filename="figures/DOE.pdf"):
     """Plot power envelope and DSO estimation for child nodes."""
 
     children = list(m.children)
