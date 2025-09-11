@@ -1,3 +1,17 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "doe"
+version = "0.1.0"
+description = "Modular library for Dynamic Operating Envelopes"
+requires-python = ">=3.10"
+dependencies = [
+    "pyomo",
+    "networkx",
+]
+
 [tool.black]
 line-length = 88
 target-version = ["py310"]
@@ -5,9 +19,9 @@ target-version = ["py310"]
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-select = ["E", "F", "I"]   # Erreurs classiques + imports
-ignore = ["E501"]          # On laisse black gérer la longueur des lignes
+select = ["E", "F", "I"]
+ignore = ["E501"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["core", "viz"]  # project packages
+known-first-party = ["doe"]
 combine-as-imports = true
