@@ -1,7 +1,7 @@
 [project]
 name = "doe"
-version = "0.1.0"
-description = "Distribution Operation Envelopes library"
+version = "0.1.1"
+description = "Dynamic Operating Envelopes library"
 authors = [{name = "DOE"}]
 readme = "docs/README.md"
 requires-python = ">=3.10"
