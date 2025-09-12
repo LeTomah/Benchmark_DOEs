@@ -24,10 +24,14 @@ class DOE:
         """Compute a Dynamic Operating Envelope for a network.
 
         Args:
-            network: Network description or identifier.
+            network: A ``pandapowerNet`` instance or the name of a file located
+                in the repository ``networks`` directory. Python modules must
+                provide a ``load()`` function returning the network.
             powerflow_mode: Power flow formulation to use (``"dc"`` or ``"ac"``).
             objective: Objective function name (``"global_sum"`` or ``"fairness"``).
-            **options: Additional options such as ``alpha`` and ``beta``.
+            **options: Additional options such as ``alpha`` and ``beta``. Network
+                related options ``parents``, ``children`` and ``operational_nodes``
+                can be provided to explicitly select node roles.
 
         Returns:
             A dictionary with solver status, objective value, envelopes and
@@ -35,8 +39,9 @@ class DOE:
         """
 
         logger = log_utils.get_logger()
+        net_opts = {k: options.pop(k) for k in ["parents", "children", "operational_nodes"] if k in options}
         params = validation.validate_inputs(powerflow_mode, objective, options)
-        data = load(network, logger=logger)
+        data = load(network, logger=logger, **net_opts)
         model = create_model(data, params, logger)
 
         pf_builder = POWERFLOW_REGISTRY[powerflow_mode]

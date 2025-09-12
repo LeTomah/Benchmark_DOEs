@@ -15,19 +15,22 @@ pip install -e .
 ```python
 from doe.compute import DOE
 
-result = DOE.compute("toy", powerflow_mode="dc", objective="global_sum", alpha=1.0, beta=1.0)
+  result = DOE.compute("toy.py", powerflow_mode="dc", objective="global_sum", alpha=1.0, beta=1.0)
 print(result["objective_value"])
 ```
 
 ## Parameters
 
-- `network`: network object or identifier. The value `"toy"` loads a small
-  built-in example.
+  - `network`: a :mod:`pandapower` network object or the name of a Python module
+    in the repository-level ``networks`` directory (e.g. ``"toy.py"``).
 - `powerflow_mode`: `"dc"` or `"ac"`. The AC mode is not implemented yet.
 - `objective`: `"global_sum"` or `"fairness"`. The fairness objective is not
   implemented yet.
 - `alpha`, `beta`: positive floats penalising curtailment budget and envelope
   centre gap respectively.
+- `parents`, `children`, `operational_nodes`: optional iterables specifying
+  node roles in the network. Defaults assume the first bus is the parent and
+  the remaining buses are children.
 
 ## Results
 

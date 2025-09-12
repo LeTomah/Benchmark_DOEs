@@ -20,6 +20,7 @@ def create_model(data: NetworkData, params: Dict[str, Any], logger) -> pyo.Concr
     m.VertV = pyo.Set(initialize=[0, 1])
     m.parents = pyo.Set(initialize=list(data.parents))
     m.children = pyo.Set(initialize=list(data.children))
+    m.operational_nodes = pyo.Set(initialize=list(data.operational_nodes))
 
     m.P = pyo.Param(
         m.Nodes,
