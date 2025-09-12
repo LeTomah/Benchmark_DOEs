@@ -1,71 +1,42 @@
-"""DC power flow constraints used in DOE models.
-
-The DC formulation assumes flat voltage profile (|V|≈1 p.u.) and small
-angle differences. Power flows on each line ``F[u,v]`` are linearised as
-``b_pu * (theta[u] - theta[v])`` where ``b_pu`` is the per-unit
-susceptance. Nodal active power balance is enforced for every bus.
-"""
+"""Simple DC power flow constraints used in DOE models."""
 
 from __future__ import annotations
 
-import math
 from typing import Any
-
 import pyomo.environ as pyo
 
 
-def build(m: pyo.ConcreteModel, G: Any) -> None:
-    """Add DC power flow variables and constraints to ``m``.
+def build(model: pyo.ConcreteModel, graph: Any) -> None:
+    """Attach a basic DC power flow formulation to ``model``.
 
-    Parameters
-    ----------
-    m:
-        Pyomo model to augment.
-    G:
-        NetworkX graph describing the electrical network.
+    The model considers a flat voltage profile and small angle differences so
+    that the active power flow on a line ``(u, v)`` is approximated by::
+
+        F[u, v] = b_pu * (theta[u] - theta[v])
+
+    where ``b_pu`` is the per-unit susceptance provided as an edge attribute.
+    Nodal active power balance is enforced for every bus.
     """
 
-    nodes = list(G.nodes)
-    lines = list(G.edges)
+    nodes = list(graph.nodes)
+    lines = list(graph.edges)
 
-    m.Nodes = pyo.Set(initialize=nodes)
-    m.Lines = pyo.Set(initialize=lines, dimen=2)
+    model.Nodes = pyo.Set(initialize=nodes)
+    model.Lines = pyo.Set(initialize=lines, dimen=2)
 
-    m.theta = pyo.Var(m.Nodes, bounds=(-0.1, math.pi))
-    m.F = pyo.Var(m.Lines)
+    model.theta = pyo.Var(model.Nodes, bounds=(-0.1, 0.1))
+    model.F = pyo.Var(model.Lines, domain=pyo.Reals)
+    model.E = pyo.Var(model.Nodes, domain=pyo.Reals)
 
-    def dc_flow_rule(m, u, v, vp, vv):
-        b_pu = float(G[u][v].get("b_pu"))
-        if b_pu is None:
-            edge_type = G[u][v].get("type")
-            if edge_type == "line":
-                raise KeyError(f"Edge {u}{v} missing 'b_pu' attribute")
-            return pyo.Constraint.Skip
-        return m.F[u, v, vp, vv] == (m.V_P[vv] **2) * b_pu * (
-            m.theta[u, vp, vv] - m.theta[v, vp, vv]
-        )
+    def dc_flow_rule(m, u, v):
+        b_pu = float(graph[u][v].get("b_pu", 0.0))
+        return m.F[u, v] == b_pu * (m.theta[u] - m.theta[v])
 
-    m.DCPowerFlow = pyo.Constraint(m.Lines, m.VertP, m.VertV, rule=dc_flow_rule)
+    model.DCPowerFlow = pyo.Constraint(model.Lines, rule=dc_flow_rule)
 
-    def current_def_rule(m, u, v, vp, vv):
-        """Link current, voltage and power flow in per-unit: I*V = F."""
-        return math.sqrt(3) * m.I[u, v, vp, vv] * m.V_P[vv] == m.F[u, v, vp, vv]
+    def power_balance_rule(m, n):
+        inflow = sum(m.F[i, j] for (i, j) in m.Lines if j == n)
+        outflow = sum(m.F[i, j] for (i, j) in m.Lines if i == n)
+        return m.E[n] == inflow - outflow
 
-    m.current_def = pyo.Constraint(m.Lines, m.VertP, m.VertV, rule=current_def_rule)
-
-    def power_balance_rule(m, u, vp, vv):
-        # Compute net flow into node n by summing over all lines (i,j) in m.Lines
-        expr = sum(
-            (m.F[i, j, vp, vv] if j == u else 0)
-            - (m.F[i, j, vp, vv] if i == u else 0)
-            for (i, j) in m.Lines
-        )
-        # If n is a parent node, subtract P_plus; otherwise use only E[n]
-        if u in m.parents:
-            return expr == m.E[u, vp, vv] - m.P_plus[u, vp, vv]
-        if u in m.children:
-            return expr == m.E[u, vp, vv] + m.P_minus[u, vp, vv]
-        else:
-            return expr == m.E[u, vp, vv]
-
-    m.power_balance = pyo.Constraint(m.Nodes, m.VertP, m.VertV, rule=power_balance_rule)
+    model.power_balance = pyo.Constraint(model.Nodes, rule=power_balance_rule)
