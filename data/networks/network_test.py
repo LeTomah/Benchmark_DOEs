@@ -1,8 +1,17 @@
-def create_network():
+"""Simple pandapower test network used in integration tests.
+
+Each network module exposes a :func:`build` function returning a
+``pandapowerNet`` instance. The network defined here is intentionally
+small so that optimisation models remain lightweight during unit tests.
+"""
+
+
+def build():
+    """Return a small example network as :class:`pandapowerNet`."""
 
     import pandapower as pp
 
-    # Crée le réseau
+    # Create the network
     net = pp.create_empty_network()
 
     # Bases
