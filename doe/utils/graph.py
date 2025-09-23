@@ -7,9 +7,26 @@ P > 0 consumption.
 
 import json
 import math
-from typing import Any, Dict, Iterable, Set
+from typing import Any, Dict, Iterable, Optional, Set
 from collections import deque
 import networkx as nx
+
+
+def _maybe_float(value: Any) -> Optional[float]:
+    """Return ``value`` converted to ``float`` when possible.
+
+    Invalid entries such as ``None`` or ``NaN`` are mapped to ``None`` so that
+    downstream callers can fall back to default values instead of propagating
+    ``NaN`` in computations.
+    """
+
+    try:
+        val = float(value)
+    except (TypeError, ValueError):  # pragma: no cover - defensive path
+        return None
+    if math.isnan(val):
+        return None
+    return val
 
 
 def extract_network_data(net: Any) -> Dict[str, Any]:
@@ -38,22 +55,33 @@ def extract_network_data(net: Any) -> Dict[str, Any]:
     else:
         raise AttributeError("Bus positions not available in network.")
 
-    s_base = 100.0 #MVA
+    s_base = float(getattr(net, "sn_mva", 100.0) or 100.0)
 
-    # Gather nodal powers in MW (per-unit conversion done later)
+    # Gather nodal powers in MW / MVAr (per-unit conversion done later)
     P_load = {idx: 0.0 for idx in net.bus.index}
     P_gen = {idx: 0.0 for idx in net.bus.index}
+    Q_load = {idx: 0.0 for idx in net.bus.index}
+    Q_gen = {idx: 0.0 for idx in net.bus.index}
     for _, row in net.load.iterrows():
-        P_load[row["bus"]] += row["p_mw"]
+        bus = row["bus"]
+        P_load[bus] += float(row.get("p_mw", 0.0))
+        Q_load[bus] += float(row.get("q_mvar", 0.0))
     for _, row in net.gen.iterrows():
-        P_gen[row["bus"]] += -row["p_mw"]
+        bus = row["bus"]
+        P_gen[bus] += -float(row.get("p_mw", 0.0))
+        Q_gen[bus] += -float(row.get("q_mvar", 0.0))
     for _, row in net.sgen.iterrows():
-        P_gen[row["bus"]] += -row["p_mw"]
+        bus = row["bus"]
+        P_gen[bus] += -float(row.get("p_mw", 0.0))
+        Q_gen[bus] += -float(row.get("q_mvar", 0.0))
     for _, row in net.ext_grid.iterrows():
-        P_gen[row["bus"]] += -float(row.get("p_mw", 0.0))
+        bus = row["bus"]
+        P_gen[bus] += -float(row.get("p_mw", 0.0))
+        Q_gen[bus] += -float(row.get("q_mvar", 0.0))
 
     # Net nodal power: positive = consumption, negative = production
     P = {idx: P_load[idx] + P_gen[idx] for idx in net.bus.index}
+    Q = {idx: Q_load[idx] + Q_gen[idx] for idx in net.bus.index}
 
     return {
         "pos": pos,
@@ -65,6 +93,9 @@ def extract_network_data(net: Any) -> Dict[str, Any]:
         "P_load": P_load,
         "P_gen": P_gen,
         "P": P,
+        "Q_load": Q_load,
+        "Q_gen": Q_gen,
+        "Q": Q,
     }
 
 
@@ -81,6 +112,8 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
     # Nodes (powers converted to per-unit)
     s_base = data["s_base"]
     for idx, row in data["bus"].iterrows():
+        vmin = _maybe_float(row.get("min_vm_pu"))
+        vmax = _maybe_float(row.get("max_vm_pu"))
         G.add_node(
             idx,
             label=row["name"],
@@ -89,13 +122,25 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
             P_load=data["P_load"][idx] / s_base,
             P_gen=data["P_gen"][idx] / s_base,
             P=data["P"][idx] / s_base,
+            Q_load=data["Q_load"][idx] / s_base,
+            Q_gen=data["Q_gen"][idx] / s_base,
+            Q=data["Q"][idx] / s_base,
+            V_min_pu=vmin,
+            V_max_pu=vmax,
         )
 
     # Lines
     for _, row in data["line"].iterrows():
         u, v = row["from_bus"], row["to_bus"]
-        x_ohm = row["x_ohm_per_km"] * row["length_km"]
-        V_kv = data["bus"].at[u, "vn_kv"]
+        length = float(row.get("length_km", 0.0))
+        x_ohm = float(row.get("x_ohm_per_km", 0.0)) * length
+        r_ohm = float(row.get("r_ohm_per_km", 0.0)) * length
+        V_kv = float(data["bus"].at[u, "vn_kv"])
+        if math.isclose(x_ohm, 0.0):
+            raise ValueError(f"Line ({u},{v}) has zero reactance")
+        z_base = V_kv**2 / s_base if s_base else 0.0
+        R_pu = r_ohm / z_base if z_base else 0.0
+        X_pu = x_ohm / z_base if z_base else 0.0
         b_pu = V_kv**2 / (x_ohm * s_base)
         max_i_ka = row.get("max_i_ka")
         base_i_ka = s_base / (math.sqrt(3) * V_kv)
@@ -113,23 +158,47 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
             length=row["length_km"],
             std_type=row.get("std_type"),
             x_ohm=x_ohm,
+            r_ohm=r_ohm,
             max_i_ka=max_i_ka,
             b_pu=b_pu,
             I_min_pu=I_min_pu,
             I_max_pu=I_max_pu,
+            R=R_pu,
+            X=X_pu,
         )
 
     # Transformers
     for _, row in data["trafo"].iterrows():
         u, v = row["hv_bus"], row["lv_bus"]
+        name = row.get("name")
+        sn_mva = _maybe_float(row.get("sn_mva"))
+        vn_hv = _maybe_float(row.get("vn_hv_kv", data["bus"].at[u, "vn_kv"]))
+        vk_percent = _maybe_float(row.get("vk_percent"))
+        vkr_percent = _maybe_float(row.get("vkr_percent"))
+
+        R_pu = None
+        X_pu = None
+        if sn_mva and vn_hv and vk_percent:
+            z_trafobase = (vn_hv**2) / sn_mva
+            r_ohm = (vkr_percent or 0.0) / 100.0 * z_trafobase
+            z_ohm = vk_percent / 100.0 * z_trafobase
+            x_ohm_sq = max(z_ohm**2 - r_ohm**2, 0.0)
+            x_ohm = math.sqrt(x_ohm_sq)
+            z_base = (vn_hv**2) / s_base if s_base else 0.0
+            if z_base:
+                R_pu = r_ohm / z_base
+                X_pu = x_ohm / z_base
+
         G.add_edge(
             u,
             v,
             type="trafo",
-            name=row.get("name"),
+            name=name,
             std_type=None,
             b_pu=None,
             max_i_ka=None,
+            R=R_pu,
+            X=X_pu,
         )
 
     trafo3w = data.get("trafo3w")
@@ -146,6 +215,8 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
                     std_type=None,
                     b_pu=None,
                     max_i_ka=None,
+                    R=None,
+                    X=None,
                 )
     return G
 
@@ -154,6 +225,12 @@ def create_graph(net: Any) -> nx.Graph:
     """Facade creating a graph from a pandapower network."""
     data = extract_network_data(net)
     return build_graph_from_data(data)
+
+
+def build_nx_from_pandapower(net: Any) -> nx.Graph:
+    """Backward compatible alias returning :func:`create_graph`."""
+
+    return create_graph(net)
 
 
 # Existing helpers remain unchanged
