@@ -6,6 +6,13 @@ from typing import Any
 import pyomo.environ as pyo
 
 
+def build(m: pyo.ConcreteModel, G: Any) -> None:
+    """Dispatch to DC and AC security constraints."""
+
+    build_dc(m, G)
+    build_ac(m, G)
+
+
 def build_dc(m: pyo.ConcreteModel, G: Any) -> None:
     """Add DC security constraints to ``model``.
     """
