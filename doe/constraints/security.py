@@ -32,4 +32,45 @@ def build_dc(m: pyo.ConcreteModel, G: Any) -> None:
 def build_ac(m: pyo.ConcreteModel, G: Any) -> None:
     """Add AC security constraints to ``model``.
     """
+    if not hasattr(m, "Nodes") or not hasattr(m, "Lines"):
+        return
 
+    if not hasattr(m, "V_sqr") or not hasattr(m, "I_sqr"):
+        return
+
+    default_vmin = 0.9
+    default_vmax = 1.1
+
+    v_min_init = {
+        n: float(G.nodes[n].get("V_min_pu", default_vmin)) ** 2 for n in m.Nodes
+    }
+    v_max_init = {
+        n: float(G.nodes[n].get("V_max_pu", default_vmax)) ** 2 for n in m.Nodes
+    }
+
+    m.V_sqr_min = pyo.Param(m.Nodes, initialize=v_min_init, mutable=True)
+    m.V_sqr_max = pyo.Param(m.Nodes, initialize=v_max_init, mutable=True)
+
+    def voltage_limit_rule(m, n):
+        return pyo.inequality(m.V_sqr_min[n], m.V_sqr[n], m.V_sqr_max[n])
+
+    m.VoltageLimits = pyo.Constraint(m.Nodes, rule=voltage_limit_rule)
+
+    default_imax = 1e3
+    i_max_init = {}
+    for (u, v) in m.Lines:
+        data = G[u][v]
+        imax = data.get("I_max_pu", default_imax)
+        if imax is None:
+            imax = default_imax
+        imax_val = float(imax)
+        if imax_val < 0:
+            imax_val = 0.0
+        i_max_init[(u, v)] = imax_val ** 2
+
+    m.I_sqr_max = pyo.Param(m.Lines, initialize=i_max_init, mutable=True)
+
+    def current_limit_rule(m, u, v):
+        return pyo.inequality(0.0, m.I_sqr[u, v], m.I_sqr_max[u, v])
+
+    m.CurrentLimits = pyo.Constraint(m.Lines, rule=current_limit_rule)

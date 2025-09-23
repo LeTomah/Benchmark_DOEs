@@ -158,7 +158,7 @@ def create_graph(net: Any) -> nx.Graph:
 
 # Existing helpers remain unchanged
 
-def op_graph(full_graph: nx.DiGraph, operational_nodes: Set[int]) -> nx.DiGraph:
+def op_graph(full_graph: nx.Graph, operational_nodes: Set[int]) -> nx.Graph:
     """Return the subgraph induced by ``operational_nodes``."""
     return full_graph.subgraph(operational_nodes).copy()
 
