@@ -5,6 +5,7 @@ import pandapower as pp
 
 
 def build():
+    """Return the multi-voltage example network without topological loops."""
     net = pp.create_empty_network()
     net.sn_mva = 1
     net.f_hz = 50.0

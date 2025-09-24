@@ -7,7 +7,16 @@ import pyomo.environ as pyo
 
 
 def build(m: pyo.ConcreteModel, G: Any) -> None:
-    """Dispatch to DC and AC security constraints."""
+    """Attach both DC and AC security constraints to ``m``.
+
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Model already initialised with sets and flow variables.
+    G : networkx.Graph
+        Graph describing the network; edge attributes are used to populate
+        current and voltage bounds.
+    """
 
     build_dc(m, G)
     build_ac(m, G)
@@ -15,6 +24,13 @@ def build(m: pyo.ConcreteModel, G: Any) -> None:
 
 def build_dc(m: pyo.ConcreteModel, G: Any) -> None:
     """Add DC security constraints to ``model``.
+
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Model containing DC flow variables ``F`` and currents ``I``.
+    G : networkx.Graph
+        Network graph providing current bounds on edges.
     """
 
     if not hasattr(m, "Lines") or not hasattr(m, "F"):
@@ -38,6 +54,13 @@ def build_dc(m: pyo.ConcreteModel, G: Any) -> None:
 
 def build_ac(m: pyo.ConcreteModel, G: Any) -> None:
     """Add AC security constraints to ``model``.
+
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Model containing squared voltage ``V_sqr`` and current ``I_sqr``.
+    G : networkx.Graph
+        Network graph providing voltage and current limits for each element.
     """
     if not hasattr(m, "Nodes") or not hasattr(m, "Lines"):
         return

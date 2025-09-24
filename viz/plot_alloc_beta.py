@@ -29,10 +29,28 @@ def plot_alloc_beta(
 
     Parameters
     ----------
-    P_min, P_max: float, optional
-        Bounds applied to the power exchanged with parent nodes.  They are
-        forwarded to :func:`core.optimization.optim_problem` so that envelope
-        sizes match those shown by :func:`viz.plot_DOE.plot_DOE`.
+    test_case : str or pandapowerNet
+        Network description passed to :func:`core.optimization.optim_problem`.
+    operational_nodes, parent_nodes, children_nodes : iterable, optional
+        Subsets describing the operational perimeter and its boundaries.
+    alpha : float, optional
+        Weight applied to the curtailment budget in the DOE objective.
+    beta_min, beta_max : float, optional
+        Lower and upper bounds of the scanned ``beta`` range.
+    beta_step : float, optional
+        Increment applied between successive ``beta`` values.
+    P_min, P_max : float, optional
+        Bounds on the power exchanged with parent nodes.
+    show : bool, optional
+        If ``True`` display the resulting plot.
+    filename : str, optional
+        Destination path for the saved PDF figure.
+
+    Returns
+    -------
+    dict
+        Dictionary with sampled ``beta`` values and associated metrics
+        (envelope, curtailment, deviation and total).
     """
 
     from core.optimization import optim_problem  # local import to avoid cycle

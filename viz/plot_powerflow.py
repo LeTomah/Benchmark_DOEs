@@ -8,7 +8,19 @@ plt.style.use(["science", "no-latex"])
 
 
 def plot_power_flow(m, G, i, j, filename="figures/Powerflow.pdf"):
-    """Visualise power flows and nodal bounds for a given scenario."""
+    """Visualise power flows and nodal bounds for a given scenario.
+
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Optimisation model containing flow variables ``F`` and node bounds.
+    G : networkx.Graph
+        Graph with node positions used for layout.
+    i, j : int
+        Indices of the active vertex pair for which flows are plotted.
+    filename : str, optional
+        Destination path for the generated PDF figure.
+    """
 
     pos = nx.get_node_attributes(G, "pos")
     labels = {}

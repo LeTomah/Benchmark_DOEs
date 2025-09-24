@@ -15,7 +15,17 @@ from .constraints_common import (
 
 
 def apply(m, G):
-    """Apply OPF constraints and objective to model ``m``."""
+    """Attach OPF constraints and objective to a Pyomo model.
+
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Model prepared by :func:`archive.pyo_environment.create_pyo_env`.
+        The function adds shared constraints and defines ``objective_opf``.
+    G : networkx.Graph
+        Operational graph whose attributes (susceptance, current limits,
+        voltage bounds) are consumed by the constraints.
+    """
 
     add_curtailment_abs(m)
     add_current_bounds(m)

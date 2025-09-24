@@ -8,7 +8,16 @@ plt.style.use(["science", "no-latex"])
 
 
 def plot_DOE(m, filename="figures/DOE.pdf"):
-    """Plot power envelope and DSO estimation for child nodes."""
+    """Plot power envelopes and DSO estimations for child nodes.
+
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Solved DOE model providing ``P_C_set`` intervals and ``info_DSO_param``
+        values for child nodes.
+    filename : str, optional
+        Path where the PDF figure should be saved.
+    """
 
     children = list(m.children)
     p0 = [getattr(m.P_C_set[n, 0], "value", m.P_C_set[n, 0]) for n in children]

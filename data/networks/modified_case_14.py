@@ -12,6 +12,7 @@ import pandapower.networks as pn
 
 
 def build() -> pp.pandapowerNet:
+    """Create a modified IEEE-14 network tailored for DOE benchmarks."""
     # 1) Base réseau (IEEE-14 pandapower)
     net = pn.case14()
 

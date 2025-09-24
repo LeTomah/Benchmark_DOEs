@@ -1,8 +1,8 @@
-"""Graph utilities for power network optimisation.
+"""Helper utilities to derive NetworkX graphs from pandapower networks.
 
-The graph is undirected but each edge (u, v) has a unique orientation
-based on tuple order. Power sign convention: P < 0 production,
-P > 0 consumption.
+The graph is undirected but each edge ``(u, v)`` has a unique orientation based
+on tuple order.  Power sign convention: ``P < 0`` denotes production whereas
+``P > 0`` denotes consumption.
 """
 
 import json
@@ -30,7 +30,27 @@ def _maybe_float(value: Any) -> Optional[float]:
 
 
 def extract_network_data(net: Any) -> Dict[str, Any]:
-    """Extract and validate raw data from a pandapower network."""
+    """Extract and validate raw data from a pandapower network.
+
+    Parameters
+    ----------
+    net : pandapowerNet
+        Network built with pandapower.  The function expects bus coordinates to
+        be available either in ``net.bus['geo']`` or ``net.bus_geodata``.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Dictionary containing nodal coordinates, base power, copies of
+        pandapower tables and aggregated active/reactive powers per bus.
+
+    Raises
+    ------
+    AttributeError
+        If no bus position information can be found.
+    ValueError
+        If the coordinate tables contain invalid data.
+    """
 
     if "geo" in net.bus.columns:
         pos: Dict[int, tuple] = {}
@@ -100,7 +120,7 @@ def extract_network_data(net: Any) -> Dict[str, Any]:
 
 
 def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
-    """Build a ``networkx.Graph`` from extracted data.
+    """Build a :class:`networkx.Graph` from the extracted pandapower data.
 
     Nodal powers provided in ``data`` are in MW and converted to per-unit here.
     Line reactances are given in ohms, base power in MVA, voltage base in kV.
@@ -246,28 +266,28 @@ def compute_info_dso(
     children_nodes: Iterable[int],
     p_attr: str = "P",
 ) -> Dict[int, float]:
-    """
-    Calcule info_DSO[c] pour chaque enfant c du sous-réseau opérationnel.
+    """Aggregate external power seen by each child node of the operational area.
 
-    Règle: info_DSO[c] = P(c) + somme des P des noeuds externes
-           atteignables depuis c via des arêtes qui sortent du sous-réseau,
-           en restant en dehors du sous-réseau lors de l'exploration.
+    For every child node ``c`` the algorithm performs a breadth-first search in
+    the complement of the operational subgraph and accumulates the attribute
+    ``p_attr`` of all reachable nodes.  The resulting dictionary approximates
+    the net demand (or generation) expected by the DSO outside the perimeter.
 
-    Paramètres
+    Parameters
     ----------
     G : nx.Graph
-        Graphe électrique (avec G.nodes[n][p_attr] disponible).
+        Electrical network with nodal power attributes.
     operational_nodes : Iterable[int]
-        Nœuds du sous-réseau opérationnel (contrôlé).
+        Nodes belonging to the operational subgraph.
     children_nodes : Iterable[int]
-        Nœuds enfants à la frontière du sous-réseau.
-    p_attr : str
-        Nom de l’attribut puissance sur les nœuds (par défaut "P").
+        Boundary nodes for which external information is computed.
+    p_attr : str, optional
+        Name of the nodal attribute containing active power (defaults to ``"P"``).
 
-    Retour
-    ------
+    Returns
+    -------
     Dict[int, float]
-        Dictionnaire {enfant -> demande/injection agrégée}.
+        Mapping from child node identifier to aggregated external power.
     """
     op_set: Set[int] = set(operational_nodes)
     children_set: Set[int] = set(children_nodes)

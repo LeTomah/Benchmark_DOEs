@@ -13,7 +13,18 @@ import pyomo.environ as pyo
 
 
 def build_sets(m, G, parent_nodes, children_nodes):
-    """Create model sets."""
+    """Initialise the Pyomo sets describing the operational network.
+
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Model to populate with sets.
+    G : networkx.Graph
+        Graph representing the operational network.  Node and edge identifiers
+        are copied into Pyomo sets.
+    parent_nodes, children_nodes : Iterable[int]
+        Boundary nodes exchanging power with the rest of the grid.
+    """
     m.Nodes = pyo.Set(initialize=list(G.nodes))
     m.Lines = pyo.Set(initialize=list(G.edges))
     m.VertP = pyo.Set(initialize=[0, 1])
@@ -22,14 +33,20 @@ def build_sets(m, G, parent_nodes, children_nodes):
     m.children = pyo.Set(initialize=children_nodes)
 
 def build_params(m, G, info_DSO, alpha, beta, P_min, P_max):
-    """Create model parameters.
+    """Create Pyomo parameters used by the DOE and OPF formulations.
 
     Parameters
     ----------
-    P_min, P_max: float
-        Bounds applied to the power exchanged with parent nodes.  They were
-        previously hard-coded but are now supplied by the caller to ease
-        experimentation.
+    m : pyomo.ConcreteModel
+        Model on which the parameters are declared.
+    G : networkx.Graph
+        Operational graph providing nodal injections and line limits.
+    info_DSO : Mapping[int, float]
+        External demand estimates supplied by the DSO for child nodes.
+    alpha, beta : float
+        Weights used in the DOE objective for curtailment and DSO deviation.
+    P_min, P_max : float
+        Bounds applied to the power exchanged with parent nodes.
     """
     m.P = pyo.Param(
         m.Nodes,
@@ -80,7 +97,7 @@ def build_params(m, G, info_DSO, alpha, beta, P_min, P_max):
 
 
 def build_variables(m, G):
-    """Create model variables."""
+    """Declare decision variables shared by DOE and OPF models."""
     m.F = pyo.Var(m.Lines, m.VertP, m.VertV, domain=pyo.Reals)
     m.I = pyo.Var(m.Lines, m.VertP, m.VertV, domain=pyo.Reals)
     m.theta = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.Reals)
@@ -105,7 +122,11 @@ def build_variables(m, G):
 
 
 def build_expressions(m, G):
-    """Placeholder for additional Pyomo expressions."""
+    """Create auxiliary Pyomo expressions if required.
+
+    The current implementation does not introduce additional expressions, but
+    the helper keeps a consistent API with other modules.
+    """
     # Currently no additional expressions required.
     return
 
@@ -123,9 +144,29 @@ def create_pyo_env(
 ):
     """Create and populate a Pyomo model from a NetworkX graph.
 
-    The ``P_min`` and ``P_max`` parameters allow users to specify the bounds on
-    exchanges at parent nodes directly when creating the environment instead of
-    relying on hard-coded defaults.
+    Parameters
+    ----------
+    graph : networkx.Graph
+        Complete network graph, typically produced by
+        :func:`archive.graph.create_graph`.
+    operational_nodes : Iterable[int], optional
+        Subset of nodes forming the operational perimeter.  When ``None`` the
+        full graph is used.
+    parent_nodes, children_nodes : Iterable[int], optional
+        Boundary nodes used to exchange power with the outside grid.
+    info_DSO : Mapping[int, float], optional
+        External demand estimates for child nodes.
+    alpha, beta : float, optional
+        Objective weights used by DOE formulations.
+    P_min, P_max : float, optional
+        Bounds on the power injected at parent nodes.
+
+    Returns
+    -------
+    tuple
+        ``(model, graph)`` where ``model`` is a populated
+        :class:`pyomo.ConcreteModel` and ``graph`` the induced operational
+        subgraph.
     """
 
     G_full = graph

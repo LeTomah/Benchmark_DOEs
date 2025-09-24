@@ -1,3 +1,5 @@
+"""Utilities to convert IEEE test cases expressed as text files."""
+
 import json
 
 import pandapower.plotting as plot
@@ -6,6 +8,25 @@ import shapely.geometry as geom
 
 
 def import_ieee_txt_to_pandapower(filename):
+    """Convert an IEEE power-system text file into a pandapower network.
+
+    Parameters
+    ----------
+    filename:
+        Path to the IEEE ``.txt`` file.  The parser expects the classical
+        ``BUS DATA`` and ``BRANCH DATA`` sections separated by ``-999`` markers.
+
+    Returns
+    -------
+    pandapowerNet
+        The constructed pandapower network including synthetic geographic
+        coordinates for visualisation.
+
+    Raises
+    ------
+    ValueError
+        If the file structure does not match the expected layout.
+    """
     import pandapower as pp
     import pandas as pd
     from pandapower.plotting import create_generic_coordinates

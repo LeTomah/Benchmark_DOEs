@@ -78,6 +78,17 @@ def add_curtailment_abs(m):
 
 
 def add_power_balance(m):
+    """Enforce active power balance at each node of the operational graph.
+
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Model that already exposes ``Lines``, ``Nodes``, ``parents`` and
+        ``children`` sets as well as the decision variables ``F``, ``E``,
+        ``P_plus`` and ``P_minus``.  The function creates the ``power_balance``
+        constraint indexed by nodes and vertex pairs.
+    """
+
     def power_balance_rule(m, u, vp, vv):
         # Compute net flow into node n by summing over all lines (i,j) in m.Lines
         expr = sum(
