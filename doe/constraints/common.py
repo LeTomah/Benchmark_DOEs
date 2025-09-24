@@ -4,6 +4,16 @@ from typing import Any
 import pyomo.environ as pyo
 
 def build(m: pyo.ConcreteModel, G: Any) -> None:
+    """Add common DOE constraints shared by AC and DC formulations.
+
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Model already equipped with sets, variables and key parameters.
+    G : networkx.Graph
+        Graph describing the operational network.  Only used for context; the
+        current implementation reads data directly from the model parameters.
+    """
 
     def add_curtailment_abs(m):
         """Define curtailment ``curt`` and its absolute value ``z``.

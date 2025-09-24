@@ -10,11 +10,20 @@ plt.style.use(["science", "no-latex"])
 def plot_curtailment(m, filename="figures/Child_nodes_curtailment.pdf"):
     """Plot power envelope and curtailment for child nodes.
 
-    For each child node, draw a vertical segment representing the active
-    power envelope ``[Pmin, Pmax]``. A round marker shows the initial demand
-    provided by the DSO (``info_DSO``) and a square marker the point after
-    curtailment (net power ``m.E``). If curtailment occurs, an arrow links the
-    two markers and the curtailment value is annotated.
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Solved DOE model exposing ``P_C_set`` intervals, ``info_DSO_param`` and
+        net power ``E`` for child nodes.
+    filename : str, optional
+        Destination path for the generated PDF figure.
+
+    Notes
+    -----
+    For each child node a vertical segment represents the active power envelope
+    ``[P_min, P_max]``.  A round marker shows the initial demand provided by the
+    DSO and a square marker the net power after curtailment.  When curtailment
+    occurs an arrow indicates the magnitude of the adjustment.
     """
 
     children = list(m.children)

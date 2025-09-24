@@ -6,6 +6,7 @@ from doe import DOE
 
 
 def test_compute_global_sum_dc():
+    """Run the DC solver pipeline on the demo network and assert success."""
     res = DOE.compute("network_test", "dc", "global_sum", alpha=0.1, beta=0.2)
     assert res["status"]
     assert res["envelopes"]

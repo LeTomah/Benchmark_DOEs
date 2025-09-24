@@ -17,6 +17,28 @@ OBJECTIVES = {"global_sum": global_sum.build, "fairness": fairness.build}
 
 
 def _load_network(network: Any) -> pp.pandapowerNet:
+    """Return a :class:`pandapowerNet` built from a name or existing object.
+
+    Parameters
+    ----------
+    network:
+        Either an existing :class:`pandapowerNet` or the name of a module inside
+        :mod:`data.networks` exposing a :func:`build` function.
+
+    Returns
+    -------
+    pandapowerNet
+        Network ready for DOE computations.
+
+    Raises
+    ------
+    ValueError
+        If ``network`` is a string that does not correspond to a known module
+        or the module does not define ``build``.
+    TypeError
+        If ``network`` is neither a pandapower network nor a recognised name.
+    """
+
     if isinstance(network, pp.pandapowerNet):
         return network
     if isinstance(network, str):

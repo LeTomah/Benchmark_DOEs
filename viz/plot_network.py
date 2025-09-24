@@ -29,6 +29,12 @@ def plot_network(
         Path where the figure will be saved.
     dpi : int, optional
         Resolution of the generated figure.
+
+    Returns
+    -------
+    None
+        The function produces and saves a matplotlib figure for visual
+        inspection.
     """
 
     pos = nx.get_node_attributes(G, "pos")

@@ -11,9 +11,16 @@ def check_packages(
     show_versions: bool = False,
     install_missing: bool = True,
 ) -> None:
-    """Check presence of packages listed in ``requirements_file`` and install missing ones.
+    """Check presence of packages listed in ``requirements_file``.
 
-    If a package is missing and ``install_missing`` is True, it will be installed via ``pip``.
+    Parameters
+    ----------
+    requirements_file : str, optional
+        Relative path to a pip requirements file.
+    show_versions : bool, optional
+        If ``True`` display the detected package versions.
+    install_missing : bool, optional
+        When ``True`` attempt to install missing dependencies using ``pip``.
     """
     requirements_path = Path(__file__).parent.parent / requirements_file
     with open(requirements_path, "r", encoding="utf-8") as file:

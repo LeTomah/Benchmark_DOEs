@@ -15,7 +15,18 @@ from .constraints_common import (
 
 
 def apply(m, G):
-    """Apply DOE constraints and objective to model `m`."""
+    """Attach DOE-specific constraints and objective to a Pyomo model.
+
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Model produced by :func:`archive.pyo_environment.create_pyo_env` or a
+        compatible builder.  The function populates several constraint blocks
+        and the ``objective_doe`` attribute.
+    G : networkx.Graph
+        Operational graph providing electrical parameters such as current
+        limits and susceptance values used by the constraints.
+    """
 
     # Common constraints
     add_curtailment_abs(m)

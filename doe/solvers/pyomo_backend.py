@@ -31,6 +31,26 @@ def build_params(m: pyo.ConcreteModel,
                  options: Dict[str, Any],
                  children: list[Any],
                  ) -> None:
+    """Populate Pyomo parameters used by the simplified DOE backend.
+
+    Parameters
+    ----------
+    m : pyomo.ConcreteModel
+        Model to populate with parameters.
+    G : networkx.Graph
+        Electrical network providing nodal data and line attributes.
+    nodes, lines : list
+        Cached lists mirroring the Pyomo sets for convenience.
+    params : dict
+        Mapping expected to contain keys such as ``info_DSO``, ``alpha``,
+        ``beta``, ``P_min`` and ``P_max``.  Missing values fall back to the
+        defaults defined inside the function.
+    options : dict
+        Solver options passed from :func:`doe.compute.compute`.  Currently not
+        interpreted but accepted for API compatibility.
+    children : list
+        Identifiers of child nodes receiving DSO information.
+    """
 
     m.P = pyo.Param(
         m.Nodes,
@@ -111,14 +131,14 @@ def solve_model(
     params: Dict[str, Any],
     options: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
-    """Build and solve a DOE Pyomo m.
+    """Build and solve a DOE Pyomo model.
 
     Parameters
     ----------
     graph:
         NetworkX graph of the network.
     powerflow_builder / security_builder / objective_builder:
-        Callbacks adding variables, constraints and objective to the m.
+        Callbacks adding variables, constraints and objective to the model.
     params:
         Additional parameters passed to the objective builder.
     options:
