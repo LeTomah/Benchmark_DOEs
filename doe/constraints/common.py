@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 import pyomo.environ as pyo
 
-def build(m: pyo.ConcreteModel, G: Any) -> None:)
+def build(m: pyo.ConcreteModel, G: Any) -> None:
 
     def add_curtailment_abs(m):
         """Define curtailment ``curt`` and its absolute value ``z``.
