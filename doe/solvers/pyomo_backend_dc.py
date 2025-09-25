@@ -14,7 +14,10 @@ ObjectiveBuilder = Callable[[pyo.ConcreteModel, Dict[str, Any]], None]
 SecurityBuilder = Callable[[pyo.ConcreteModel, Any], None]
 
 
-def build_sets(m: pyo.ConcreteModel, G: Any, parent_nodes, children_nodes):
+def build_sets(m: pyo.ConcreteModel,
+               G: Any,
+               parent_nodes,
+               children_nodes):
     """Initialise core Pyomo sets shared by all builders."""
 
     m.Nodes = pyo.Set(initialize=list(G.nodes))
@@ -26,10 +29,11 @@ def build_sets(m: pyo.ConcreteModel, G: Any, parent_nodes, children_nodes):
 
 def build_params(m: pyo.ConcreteModel,
                  G: Any, nodes: list[Any],
-                 lines: list[tuple[Any, Any]],
-                 params: Dict[str, Any],
-                 options: Dict[str, Any],
-                 children: list[Any],
+                 info_DSO,
+                 alpha,
+                 beta,
+                 P_min,
+                 P_max
                  ) -> None:
     """Populate Pyomo parameters used by the simplified DOE backend.
 
@@ -107,15 +111,13 @@ def build_variables(m: pyo.ConcreteModel) -> None:
     m.V = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.NonNegativeReals)
     m.E = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.Reals)
     m.P_plus = pyo.Var(m.parents, m.VertP, m.VertV, domain=pyo.Reals)
-    # Bound child injections to realistic per-unit range
-    m.P_minus = pyo.Var(
-        m.children, m.VertP, m.VertV, domain=pyo.Reals
-    )
+    m.P_minus = pyo.Var(m.children, m.VertP, m.VertV, domain=pyo.Reals)
     m.P_C_set = pyo.Var(m.children, m.VertP, domain=pyo.Reals)
     m.z = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.NonNegativeReals)
     m.curt = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.Reals)
     m.aux = pyo.Var(m.children, domain=pyo.Reals)
     m.envelope_volume = pyo.Var(domain=pyo.Reals)
+
     #Curtailment budget
     total_p_abs = sum(abs(pyo.value(m.P[n])) for n in m.Nodes)
     m.curtailment_budget = pyo.Var(domain=pyo.NonNegativeReals, bounds=(-total_p_abs, total_p_abs))
@@ -144,7 +146,7 @@ def solve_model(
     options:
         Currently unused placeholder for solver options.
     """
-
+    #TODO: Vérifier cette fonction. La remplacer par create_pyo_env() si fausse.
     m = pyo.ConcreteModel()
 
     nodes, lines, _parents, children = build_sets(m, G)

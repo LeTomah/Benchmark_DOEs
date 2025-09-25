@@ -9,7 +9,7 @@ import pandapower as pp
 
 from .constraints import powerflow_dc, powerflow_ac, security
 from .objectives import global_sum, fairness
-from .solvers.pyomo_backend import solve_model
+from .solvers.pyomo_backend_dc import solve_model
 from .utils.graph import build_nx_from_pandapower
 
 POWERFLOW = {"dc": powerflow_dc.build, "ac": powerflow_ac.build}

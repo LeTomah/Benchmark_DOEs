@@ -104,15 +104,13 @@ def build_variables(m, G):
     m.V = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.NonNegativeReals)
     m.E = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.Reals)
     m.P_plus = pyo.Var(m.parents, m.VertP, m.VertV, domain=pyo.Reals)
-    # Bound child injections to realistic per-unit range
-    m.P_minus = pyo.Var(
-        m.children, m.VertP, m.VertV, domain=pyo.Reals
-    )
+    m.P_minus = pyo.Var(m.children, m.VertP, m.VertV, domain=pyo.Reals)
     m.P_C_set = pyo.Var(m.children, m.VertP, domain=pyo.Reals)
     m.z = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.NonNegativeReals)
     m.curt = pyo.Var(m.Nodes, m.VertP, m.VertV, domain=pyo.Reals)
     m.aux = pyo.Var(m.children, domain=pyo.Reals)
     m.envelope_volume = pyo.Var(domain=pyo.Reals)
+
     #Curtailment budget
     total_p_abs = sum(abs(pyo.value(m.P[n])) for n in m.Nodes)
     m.curtailment_budget = pyo.Var(domain=pyo.NonNegativeReals, bounds=(-total_p_abs, total_p_abs))
