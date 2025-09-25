@@ -12,21 +12,21 @@ from collections import deque
 import networkx as nx
 
 
-def _maybe_float(value: Any) -> Optional[float]:
-    """Return ``value`` converted to ``float`` when possible.
-
-    Invalid entries such as ``None`` or ``NaN`` are mapped to ``None`` so that
-    downstream callers can fall back to default values instead of propagating
-    ``NaN`` in computations.
-    """
-
-    try:
-        val = float(value)
-    except (TypeError, ValueError):  # pragma: no cover - defensive path
-        return None
-    if math.isnan(val):
-        return None
-    return val
+# def _maybe_float(value: Any) -> Optional[float]:
+#     """Return ``value`` converted to ``float`` when possible.
+#
+#     Invalid entries such as ``None`` or ``NaN`` are mapped to ``None`` so that
+#     downstream callers can fall back to default values instead of propagating
+#     ``NaN`` in computations.
+#     """
+#
+#     try:
+#         val = float(value)
+#     except (TypeError, ValueError):  # pragma: no cover - defensive path
+#         return None
+#     if math.isnan(val):
+#         return None
+#     return val
 
 
 def extract_network_data(net: Any) -> Dict[str, Any]:
@@ -132,8 +132,8 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
     # Nodes (powers converted to per-unit)
     s_base = data["s_base"]
     for idx, row in data["bus"].iterrows():
-        vmin = _maybe_float(row.get("min_vm_pu"))
-        vmax = _maybe_float(row.get("max_vm_pu"))
+        vmin = row.get("min_vm_pu")
+        vmax = row.get("max_vm_pu")
         G.add_node(
             idx,
             label=row["name"],
@@ -191,10 +191,10 @@ def build_graph_from_data(data: Dict[str, Any]) -> nx.Graph:
     for _, row in data["trafo"].iterrows():
         u, v = row["hv_bus"], row["lv_bus"]
         name = row.get("name")
-        sn_mva = _maybe_float(row.get("sn_mva"))
-        vn_hv = _maybe_float(row.get("vn_hv_kv", data["bus"].at[u, "vn_kv"]))
-        vk_percent = _maybe_float(row.get("vk_percent"))
-        vkr_percent = _maybe_float(row.get("vkr_percent"))
+        sn_mva = row.get("sn_mva")
+        vn_hv = row.get("vn_hv_kv", data["bus"].at[u, "vn_kv"])
+        vk_percent = row.get("vk_percent")
+        vkr_percent = row.get("vkr_percent")
 
         R_pu = None
         X_pu = None
@@ -245,12 +245,6 @@ def create_graph(net: Any) -> nx.Graph:
     """Facade creating a graph from a pandapower network."""
     data = extract_network_data(net)
     return build_graph_from_data(data)
-
-
-def build_nx_from_pandapower(net: Any) -> nx.Graph:
-    """Backward compatible alias returning :func:`create_graph`."""
-
-    return create_graph(net)
 
 
 # Existing helpers remain unchanged
