@@ -3,15 +3,22 @@
 
 This repository provides the implementation.
 
-For more detailed information, refer to the paper [here](https://).
+For more detailed information, refer to the [paper](https://).
 
 ## Table of contents
 - [Introduction](#introduction)
+- [Task List](#task-list)
 - [Required Data](#required-data)
 - [Usage](#usage)
 
 ## Introduction
 
+## TASK LIST:
+ - [X] Readme
+ - [ ] Documentation
+ - [ ] Custom optimizer
+   - [X] Gurobi
+   - [ ] GLPK
 
 ## Required Data
 The required data for running the code is available in the `Data` folder. The data includes:
