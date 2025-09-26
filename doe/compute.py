@@ -9,7 +9,7 @@ import pandapower as pp
 
 from .constraints import powerflow_dc, powerflow_ac, security
 from .objectives import global_sum, fairness
-from .solvers.pyomo_backend_dc import create_pyo_env
+from .solvers.pyomo_backend_dc import solve_model
 from .utils.graph import create_graph
 
 POWERFLOW = {"dc": powerflow_dc.build, "ac": powerflow_ac.build}
@@ -89,7 +89,7 @@ def compute(network: Any, powerflow_mode: str, objective: str, **options: Any) -
         "envelope_center_gap": 0.0,
     }
 
-    result = create_pyo_env(
+    result = solve_model(
         G,
         powerflow_builder=POWERFLOW[powerflow_mode],
         security_builder=security.build,
