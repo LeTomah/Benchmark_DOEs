@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, Optional
 
+import math
+
 import pyomo.environ as pyo
 
 from data.gurobi_config import get_wls_params
@@ -243,14 +245,21 @@ def solve_model(
         result = None
         status = "not_solved"
 
-    objective_val = float(pyo.value(m.objective))
+    # Tolère les résolutions impossibles en gardant une valeur numérique sûre.
+    objective_raw = pyo.value(m.objective, exception=False)
+    objective_val = float(objective_raw) if objective_raw is not None else math.nan
 
     envelopes: Dict[Any, tuple[float, float]] = {}
 
     if hasattr(m, "P_C_set") and hasattr(m, "children"):
         vertices = list(m.VertP)
         for node in m.children:
-            values = [float(pyo.value(m.P_C_set[node, v])) for v in vertices]
+            # Ignore les entrées sans valeur (cas "not_solved").
+            values = []
+            for v in vertices:
+                p_val = pyo.value(m.P_C_set[node, v], exception=False)
+                if p_val is not None:
+                    values.append(float(p_val))
             if values:
                 lower = min(values)
                 upper = max(values)

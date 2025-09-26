@@ -21,7 +21,7 @@ children_nodes = (2, 3, 4)
 
 
 if __name__ == "__main__":
-    compute(
+    result = compute(
         P_min=P_min,
         P_max=P_max,
         Q_min=Q_min,
@@ -35,3 +35,31 @@ if __name__ == "__main__":
         parent_nodes=parent_nodes,
         children_nodes=children_nodes,
     )
+
+    # Ajout : affichage des principaux résultats de l'optimisation.
+    print("=== Résumé de l'optimisation DOE ===")
+    print(f"Statut: {result.get('status')}")
+    if result.get("objective_value") is not None:
+        print(f"Valeur de l'objectif: {result['objective_value']}")
+
+    envelopes = result.get("envelopes") or {}
+    if envelopes:
+        print("\nBornes des enveloppes (P_min, P_max) par nœud:")
+        for node, bounds in envelopes.items():
+            print(f"  Nœud {node}: {bounds}")
+    else:
+        print("\nAucune enveloppe calculée.")
+
+    curtailment_report = result.get("curtailment_report") or {}
+    if curtailment_report:
+        print("\nValeurs de curtailment:")
+        for node, value in curtailment_report.items():
+            print(f"  Nœud {node}: {value}")
+    else:
+        print("\nAucun curtailment détecté.")
+
+    diagnostics = result.get("diagnostics") or {}
+    if diagnostics:
+        print("\nDiagnostics complémentaires:")
+        for key, value in diagnostics.items():
+            print(f"  {key}: {value}")
