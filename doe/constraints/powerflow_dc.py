@@ -35,12 +35,14 @@ def build(m: pyo.ConcreteModel, G: Any) -> None:
     # m.F = pyo.Var(m.Lines)
 
     def dc_flow_rule(m, u, v, vp, vv):
-        b_pu = float(G[u][v].get("b_pu"))
-        if b_pu is None:
+        # Vérifie d'abord la présence de ``b_pu`` avant toute conversion.
+        b_attr = G[u][v].get("b_pu")
+        if b_attr is None:
             edge_type = G[u][v].get("type")
             if edge_type == "line":
                 raise KeyError(f"Edge {u}{v} missing 'b_pu' attribute")
             return pyo.Constraint.Skip
+        b_pu = float(b_attr)
         return m.F[u, v, vp, vv] == (m.V_P[vv] **2) * b_pu * (
             m.theta[u, vp, vv] - m.theta[v, vp, vv]
         )
