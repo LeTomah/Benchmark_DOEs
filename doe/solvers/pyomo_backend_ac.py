@@ -105,7 +105,7 @@ def build_params(m, G, info_DSO, alpha, beta, P_min, P_max, Q_min, Q_max):
     m.P_min = pyo.Param(initialize=P_min)
     m.P_max = pyo.Param(initialize=P_max)
     m.Q_min = pyo.Param(initialize=Q_min)
-    m.Q_max = pyo.param(initialize=Q_max)
+    m.Q_max = pyo.Param(initialize=Q_max)
     m.alpha = pyo.Param(initialize=alpha)
     m.beta = pyo.Param(initialize=beta)
 

@@ -15,31 +15,6 @@ def build(m: pyo.ConcreteModel, G: Any) -> None:
         current implementation reads data directly from the model parameters.
     """
 
-    def add_curtailment_abs(m):
-        """Define curtailment ``curt`` and its absolute value ``z``.
-
-        Also enforce ``sum(z) <= curtailment_budget`` for each vertex pair.
-        """
-
-        def curt_def_rule(m, u, vp, vv):
-            return m.curt[u, vp, vv] == m.P[u] - m.E[u, vp, vv]
-
-        m.curt_def = pyo.Constraint(m.Nodes, m.VertP, m.VertV, rule=curt_def_rule)
-
-        def abs_pos_rule(m, u, vp, vv):
-            return m.z[u, vp, vv] >= m.curt[u, vp, vv]
-
-        m.abs_E_pos = pyo.Constraint(m.Nodes, m.VertP, m.VertV, rule=abs_pos_rule)
-
-        def abs_neg_rule(m, u, vp, vv):
-            return m.z[u, vp, vv] >= -m.curt[u, vp, vv]
-
-        m.abs_E_neg = pyo.Constraint(m.Nodes, m.VertP, m.VertV, rule=abs_neg_rule)
-
-        def upper_bound_rule(m, vp, vv):
-            return sum(m.z[u, vp, vv] for u in m.Nodes) <= m.curtailment_budget
-
-        m.upper_bound = pyo.Constraint(m.VertP, m.VertV, rule=upper_bound_rule)
 
 
     def add_voltage_vertices(m):
