@@ -3,7 +3,7 @@ import importlib
 import pathlib
 import sys
 import types
-from typing import Dict, Iterable, List
+from typing import Dict, List
 
 import pytest
 
@@ -36,9 +36,6 @@ def compute_argument_sets(example_network) -> List[Dict[str, object]]:
     parent_nodes = sorted_nodes[5:7]
     children_nodes = sorted_nodes[7:9]
 
-    def _p_limits(nodes: Iterable[int]) -> Dict[int, Dict[str, float]]:
-        return {node: {"pmin": -5.0, "pmax": 5.0} for node in nodes}
-
     dc_case = {
         "network": example_network,
         "network_name": "network_test",
@@ -47,8 +44,10 @@ def compute_argument_sets(example_network) -> List[Dict[str, object]]:
         "operational_nodes": operational_nodes,
         "parent_nodes": parent_nodes,
         "children_nodes": children_nodes,
-        "p_limits": _p_limits(operational_nodes),
-        "q_limits": None,
+        "P_min": -5.0,
+        "P_max": 5.0,
+        "Q_min": -2.0,
+        "Q_max": 2.0,
         "alpha": 1.0,
         "beta": 2.0,
         "security": {"theta_min": -0.5, "theta_max": 0.5},
@@ -63,8 +62,10 @@ def compute_argument_sets(example_network) -> List[Dict[str, object]]:
         "operational_nodes": operational_nodes,
         "parent_nodes": parent_nodes,
         "children_nodes": children_nodes,
-        "p_limits": _p_limits(operational_nodes),
-        "q_limits": {node: {"qmin": -2.0, "qmax": 2.0} for node in operational_nodes},
+        "P_min": -5.0,
+        "P_max": 5.0,
+        "Q_min": -2.0,
+        "Q_max": 2.0,
         "alpha": 1.0,
         "beta": 2.0,
         "security": {"v_min": 0.95, "v_max": 1.05},
@@ -81,13 +82,14 @@ def compute_argument_sets(example_network) -> List[Dict[str, object]]:
             "operational_nodes": case["operational_nodes"],
             "parent_nodes": case["parent_nodes"],
             "children_nodes": case["children_nodes"],
-            "p_limits": case["p_limits"],
+            "P_min": case["P_min"],
+            "P_max": case["P_max"],
             "alpha": case["alpha"],
             "beta": case["beta"],
             "security": case["security"],
         }
-        if case["q_limits"] is not None:
-            summary["q_limits"] = case["q_limits"]
+        summary["Q_min"] = case["Q_min"]
+        summary["Q_max"] = case["Q_max"]
         printable.append(summary)
 
     print("compute_argument_sets ->", printable)
@@ -103,11 +105,12 @@ def _build_compute_kwargs(case: Dict[str, object]) -> Dict[str, object]:
         "operational_nodes": case["operational_nodes"],
         "parent_nodes": case["parent_nodes"],
         "children_nodes": case["children_nodes"],
-        "p_limits": case["p_limits"],
+        "P_min": case["P_min"],
+        "P_max": case["P_max"],
         "security": case["security"],
     }
-    if case["q_limits"] is not None:
-        kwargs["q_limits"] = case["q_limits"]
+    kwargs["Q_min"] = case["Q_min"]
+    kwargs["Q_max"] = case["Q_max"]
     return kwargs
 
 
@@ -204,11 +207,10 @@ def test_compute_builds_parameters_and_uses_solver(
         assert captured["options"]["operational_nodes"] == case["operational_nodes"]
         assert captured["options"]["parent_nodes"] == case["parent_nodes"]
         assert captured["options"]["children_nodes"] == case["children_nodes"]
-        assert captured["options"]["p_limits"] == case["p_limits"]
-        if case["q_limits"] is not None:
-            assert captured["options"]["q_limits"] == case["q_limits"]
-        else:
-            assert "q_limits" not in captured["options"]
+        assert captured["options"]["P_min"] == case["P_min"]
+        assert captured["options"]["P_max"] == case["P_max"]
+        assert captured["options"]["Q_min"] == case["Q_min"]
+        assert captured["options"]["Q_max"] == case["Q_max"]
         if case["mode"] == "dc":
             assert captured["options"]["security"]["theta_min"] == case["security"]["theta_min"]
             assert captured["options"]["security"]["theta_max"] == case["security"]["theta_max"]
