@@ -10,7 +10,7 @@ import pandapower as pp
 from .constraints import powerflow_dc, powerflow_ac, security
 from .objectives import global_sum, fairness
 from .solvers.pyomo_backend_dc import solve_model
-from .utils.graph import build_nx_from_pandapower
+from .utils.graph import create_graph
 
 POWERFLOW = {"dc": powerflow_dc.build, "ac": powerflow_ac.build}
 OBJECTIVES = {"global_sum": global_sum.build, "fairness": fairness.build}
@@ -79,7 +79,7 @@ def compute(network: Any, powerflow_mode: str, objective: str, **options: Any) -
     if objective == "global_sum" and ("alpha" not in options or "beta" not in options):
         raise ValueError("alpha and beta must be provided for the global_sum objective")
 
-    G = build_nx_from_pandapower(net)
+    G = create_graph(net)
 
     params = {
         "alpha": options.get("alpha"),

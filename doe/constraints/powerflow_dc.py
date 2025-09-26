@@ -25,14 +25,14 @@ def build(m: pyo.ConcreteModel, G: Any) -> None:
         NetworkX graph describing the electrical network.
     """
 
-    nodes = list(G.nodes)
-    lines = list(G.edges)
-
-    m.Nodes = pyo.Set(initialize=nodes)
-    m.Lines = pyo.Set(initialize=lines, dimen=2)
-
-    m.theta = pyo.Var(m.Nodes, bounds=(-0.1, math.pi))
-    m.F = pyo.Var(m.Lines)
+    # nodes = list(G.nodes)
+    # lines = list(G.edges)
+    #
+    # m.Nodes = pyo.Set(initialize=nodes)
+    # m.Lines = pyo.Set(initialize=lines, dimen=2)
+    #
+    # m.theta = pyo.Var(m.Nodes, bounds=(-0.1, math.pi))
+    # m.F = pyo.Var(m.Lines)
 
     def dc_flow_rule(m, u, v, vp, vv):
         b_pu = float(G[u][v].get("b_pu"))

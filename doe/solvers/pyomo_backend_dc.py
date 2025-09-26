@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict
 import pyomo.environ as pyo
 
 from data.gurobi_config import get_wls_params
-
+#from test.run import parent_nodes, children_nodes #TODO: changer l'appel des parent et children
 
 PowerflowBuilder = Callable[[pyo.ConcreteModel, Any], None]
 ObjectiveBuilder = Callable[[pyo.ConcreteModel, Dict[str, Any]], None]
@@ -149,7 +149,7 @@ def solve_model(
     #TODO: Vérifier cette fonction. La remplacer par create_pyo_env() si fausse.
     m = pyo.ConcreteModel()
 
-    nodes, lines, _parents, children = build_sets(m, G)
+    nodes, lines, parents, children = build_sets(m, G, parent_nodes=parent_nodes, children_nodes=children_nodes)
     build_params(m, G, nodes, lines, params, children)
     build_variables(m)
 
