@@ -8,8 +8,6 @@ import pyomo.environ as pyo
 
 from data.gurobi_config import get_wls_params
 
-#from test.run import parent_nodes, children_nodes #TODO: changer l'appel des parent et children
-
 PowerflowBuilder = Callable[[pyo.ConcreteModel, Any], None]
 ObjectiveBuilder = Callable[[pyo.ConcreteModel, Dict[str, Any]], None]
 SecurityBuilder = Callable[[pyo.ConcreteModel, Any], None]
