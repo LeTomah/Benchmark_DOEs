@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 import pyomo.environ as pyo
 
@@ -102,7 +102,7 @@ def build_params(m: pyo.ConcreteModel,
         domain=pyo.Reals,
     )
 
-def build_variables(m: pyo.ConcreteModel) -> None:
+def build_variables(m: pyo.ConcreteModel, G: Any | None = None) -> None:
     """Create the decision variables used across the DOE models."""
     m.F = pyo.Var(m.Lines, m.VertP, m.VertV, domain=pyo.Reals)
     m.I = pyo.Var(m.Lines, m.VertP, m.VertV, domain=pyo.Reals)
@@ -124,6 +124,77 @@ def build_variables(m: pyo.ConcreteModel) -> None:
     m.diff_DSO = pyo.Var(m.children, domain=pyo.NonNegativeReals)
     m.envelope_center_gap = pyo.Var(domain=pyo.Reals)
 
+
+def build_expressions(m: pyo.ConcreteModel, G: Any) -> None:
+    """Create auxiliary Pyomo expressions if required.
+
+    The DC backend currently does not rely on additional Pyomo expressions, but
+    the helper mirrors the public API exposed in :mod:`archive.pyo_environment`.
+    """
+
+    # No additional expressions are required for the simplified DC backend.
+    return
+
+def create_pyo_env(
+    graph,
+    operational_nodes=None,
+    parent_nodes=None,
+    children_nodes=None,
+    info_DSO: Optional[Dict[int, float]] = None,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+    P_min: float = -1.0,
+    P_max: float = 1.0,
+):
+    """Create and populate a Pyomo model from a NetworkX graph.
+
+    Parameters
+    ----------
+    graph : networkx.Graph
+        Complete network graph, typically produced by
+        :func:`archive.graph.create_graph`.
+    operational_nodes : Iterable[int], optional
+        Subset of nodes forming the operational perimeter.  When ``None`` the
+        full graph is used.
+    parent_nodes, children_nodes : Iterable[int], optional
+        Boundary nodes used to exchange power with the outside grid.
+    info_DSO : Mapping[int, float], optional
+        External demand estimates for child nodes.
+    alpha, beta : float, optional
+        Objective weights used by DOE formulations.
+    P_min, P_max : float, optional
+        Bounds on the power injected at parent nodes.
+
+    Returns
+    -------
+    tuple
+        ``(model, graph)`` where ``model`` is a populated
+        :class:`pyomo.ConcreteModel` and ``graph`` the induced operational
+        subgraph.
+    """
+
+    G_full = graph
+    if operational_nodes is None:
+        operational_nodes = list(G_full.nodes)
+
+    G = G_full.subgraph(operational_nodes).copy()
+
+    if parent_nodes is None and children_nodes:
+        raise ValueError("parent_nodes must be provided for DOE problems")
+
+    m = pyo.ConcreteModel()
+    build_sets(m, G, parent_nodes or [operational_nodes[0]], children_nodes or [])
+    build_params(m, G, info_DSO or {}, alpha, beta, P_min, P_max)
+    build_variables(m, G)
+    build_expressions(m, G)
+
+    return m, G
+
+
+# ---------------------------------------------------------------------------
+# Legacy solver pipeline preserved for backwards compatibility
+# ---------------------------------------------------------------------------
+
 def solve_model(
     G: Any,
     powerflow_builder: PowerflowBuilder,
@@ -134,29 +205,62 @@ def solve_model(
 ) -> Dict[str, Any]:
     """Build and solve a DOE Pyomo model.
 
-    Parameters
-    ----------
-    graph:
-        NetworkX graph of the network.
-    powerflow_builder / security_builder / objective_builder:
-        Callbacks adding variables, constraints and objective to the model.
-    params:
-        Additional parameters passed to the objective builder.
-    options:
-        Currently unused placeholder for solver options.
+    The heavy lifting is now delegated to :func:`create_pyo_env`, which
+    initialises the Pyomo environment.  The solving logic is retained so that
+    existing callers keep working while the refactor is rolled out.
     """
-    #TODO: Vérifier cette fonction. La remplacer par create_pyo_env() si fausse.
-    m = pyo.ConcreteModel()
 
-    parent_nodes = options.get("parent_nodes")
-    children_nodes = options.get("children_nodes")
+    # The historical implementation created the Pyomo model directly.  The
+    # block below is kept in comments for future reference during the refactor:
+    #
+    #     m = pyo.ConcreteModel()
+    #     build_sets(m, G, parent_nodes=parent_nodes, children_nodes=children_nodes)
+    #     build_params(m, G, info_P=None, alpha=None, beta=None, P_min=None, P_max=None)
+    #     build_variables(m)
+    #
+    # where ``parent_nodes`` and ``children_nodes`` originated from the options
+    # dictionary.  The logic now lives inside :func:`create_pyo_env` to make the
+    # construction reusable by other components.
 
-    build_sets(m, G, parent_nodes=parent_nodes, children_nodes=children_nodes)
-    build_params(m, G, info_P=None, alpha=None, beta=None, P_min=None, P_max=None)
-    build_variables(m)
+    options = options or {}
+    params = params or {}
 
-    powerflow_builder(m, G)
-    security_builder(m, G)
+    p_limits_option = options.get("p_limits")
+    if isinstance(p_limits_option, dict):
+        pmin_values = [
+            limits.get("pmin")
+            for limits in p_limits_option.values()
+            if isinstance(limits, dict) and limits.get("pmin") is not None
+        ]
+        pmax_values = [
+            limits.get("pmax")
+            for limits in p_limits_option.values()
+            if isinstance(limits, dict) and limits.get("pmax") is not None
+        ]
+        P_min = float(min(pmin_values)) if pmin_values else -1.0
+        P_max = float(max(pmax_values)) if pmax_values else 1.0
+    elif p_limits_option is not None:
+        if len(p_limits_option) != 2:
+            raise ValueError("p_limits must provide exactly two bounds")
+        P_min = float(p_limits_option[0])
+        P_max = float(p_limits_option[1])
+    else:
+        P_min, P_max = -1.0, 1.0
+
+    m, operational_graph = create_pyo_env(
+        graph=G,
+        operational_nodes=options.get("operational_nodes"),
+        parent_nodes=options.get("parent_nodes"),
+        children_nodes=options.get("children_nodes"),
+        info_DSO=options.get("info_DSO") or {},
+        alpha=float(params.get("alpha", 1.0)),
+        beta=float(params.get("beta", 1.0)),
+        P_min=P_min,
+        P_max=P_max,
+    )
+
+    powerflow_builder(m, operational_graph)
+    security_builder(m, operational_graph)
     objective_builder(m, params)
 
     try:
@@ -172,7 +276,13 @@ def solve_model(
 
     objective_val = float(pyo.value(m.objective))
 
-    envelopes = {n: (G.nodes[n]["P"], G.nodes[n]["P"]) for n in G.nodes}
+    envelopes = {
+        n: (
+            operational_graph.nodes[n]["P"],
+            operational_graph.nodes[n]["P"],
+        )
+        for n in operational_graph.nodes
+    }
 
     return {
         "status": status,
