@@ -130,3 +130,45 @@ def build_variables(m, G):
 
     m.diff_DSO = pyo.Var(m.children, domain=pyo.NonNegativeReals)
     m.envelope_center_gap = pyo.Var(domain=pyo.Reals)
+
+
+def build_expressions(m, G):
+    """Create auxiliary Pyomo expressions required by the AC backend."""
+
+    # The AC backend currently does not rely on additional expressions.  This
+    # helper mirrors the DC API so downstream builders can expect the same
+    # entry point on both formulations.
+    return
+
+
+def create_pyo_env(
+    graph,
+    operational_nodes=None,
+    parent_nodes=None,
+    children_nodes=None,
+    info_DSO: Optional[Dict[int, float]] = None,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+    P_min: float = -1.0,
+    P_max: float = 1.0,
+    Q_min: float = -1.0,
+    Q_max: float = 1.0,
+):
+    """Create and populate an AC Pyomo model from a NetworkX graph."""
+
+    G_full = graph
+    if operational_nodes is None:
+        operational_nodes = list(G_full.nodes)
+
+    G = G_full.subgraph(operational_nodes).copy()
+
+    if parent_nodes is None and children_nodes:
+        raise ValueError("parent_nodes must be provided for DOE problems")
+
+    m = pyo.ConcreteModel()
+    build_sets(m, G, parent_nodes or [operational_nodes[0]], children_nodes or [])
+    build_params(m, G, info_DSO or {}, alpha, beta, P_min, P_max, Q_min, Q_max)
+    build_variables(m, G)
+    build_expressions(m, G)
+
+    return m, G
