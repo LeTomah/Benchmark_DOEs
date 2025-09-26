@@ -247,13 +247,23 @@ def solve_model(
 
     objective_val = float(pyo.value(m.objective))
 
-    envelopes = {
-        n: (
-            operational_graph.nodes[n]["P"],
-            operational_graph.nodes[n]["P"],
-        )
-        for n in operational_graph.nodes
-    }
+    envelopes: Dict[Any, tuple[float, float]] = {}
+
+    if hasattr(m, "P_C_set") and hasattr(m, "children"):
+        vertices = list(m.VertP)
+        for node in m.children:
+            values = [float(pyo.value(m.P_C_set[node, v])) for v in vertices]
+            if values:
+                lower = min(values)
+                upper = max(values)
+                envelopes[node] = (lower, upper)
+
+    if not envelopes:
+        # When the DOE formulation does not populate ``P_C_set`` (e.g. legacy
+        # pipelines), fall back to the global parent bounds to maintain a
+        # meaningful payload for API consumers.
+        parent_bounds = (float(pyo.value(m.P_min)), float(pyo.value(m.P_max)))
+        envelopes = {node: parent_bounds for node in getattr(m, "parents", [])}
 
     return {
         "status": status,
