@@ -60,16 +60,16 @@ def build_params(m, G, info_DSO, alpha, beta, P_min, P_max):
     m.NegativeNodes = pyo.Set(
         initialize=[n for n in m.Nodes if G.nodes[n].get("P", 0.0) < 0]
     )
-    m.info_DSO_param = pyo.Param(
+    m.info_P = pyo.Param(
         m.children,
         initialize={n: float(info_DSO.get(n, 0.0)) for n in m.children},
         domain=pyo.Reals,
     )
     m.positive_demand = pyo.Set(
-        initialize=[n for n in m.children if pyo.value(m.info_DSO_param[n]) > 0]
+        initialize=[n for n in m.children if pyo.value(m.info_P[n]) > 0]
     )
     m.negative_demand = pyo.Set(
-        initialize=[n for n in m.children if pyo.value(m.info_DSO_param[n]) < 0]
+        initialize=[n for n in m.children if pyo.value(m.info_P[n]) < 0]
     )
     m.V_min = pyo.Param(initialize=0.9)
     m.V_max = pyo.Param(initialize=1.1)
@@ -96,7 +96,7 @@ def build_params(m, G, info_DSO, alpha, beta, P_min, P_max):
     )
 
 
-def build_variables(m, G):
+def build_variables(m):
     """Declare decision variables shared by DOE and OPF models."""
     m.F = pyo.Var(m.Lines, m.VertP, m.VertV, domain=pyo.Reals)
     m.I = pyo.Var(m.Lines, m.VertP, m.VertV, domain=pyo.Reals)

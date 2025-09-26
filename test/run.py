@@ -15,9 +15,9 @@ beta = 1
 powerflow_mode = "dc"
 network = "example_multivoltage_adapted"
 objective = "global_sum"
-operational_nodes = 0, 1, 2, 3, 4, 5
-parent_nodes = 0
-children_nodes = 2, 3, 4
+operational_nodes = (0, 1, 2, 3, 4, 5)
+parent_nodes = (0,)
+children_nodes = (2, 3, 4)
 
 
 if __name__ == "__main__":

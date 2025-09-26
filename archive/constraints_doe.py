@@ -67,14 +67,14 @@ def apply(m, G):
 
     def diff_dso_rule(m, u):
         return -m.diff_DSO[u] <= (
-                ((m.P_C_set[u, 0] + m.P_C_set[u, 1]) / 2) - m.info_DSO_param[u]
+                ((m.P_C_set[u, 0] + m.P_C_set[u, 1]) / 2) - m.info_P[u]
         )
 
     m.diff_DSO_constraint = pyo.Constraint(m.children, rule=diff_dso_rule)
 
     def diff_bis_dso_rule(m, u):
         return (
-                ((m.P_C_set[u, 0] + m.P_C_set[u, 1]) / 2) - m.info_DSO_param[u]
+                ((m.P_C_set[u, 0] + m.P_C_set[u, 1]) / 2) - m.info_P[u]
             <= m.diff_DSO[u]
         )
 
@@ -115,12 +115,12 @@ def apply(m, G):
     )
 
     # def p_C_minus_limit_rule(m, pos):
-    #     return m.info_DSO_param[pos] >= m.P_C_set[pos, 1]
+    #     return m.info_P[pos] >= m.P_C_set[pos, 1]
     #
     # m.p_C_minus_limit = pyo.Constraint(m.positive_demand, rule=p_C_minus_limit_rule)
     #
     # def p_C_plus_limit_rule(m, neg):
-    #     return m.P_C_set[neg, 0] >= m.info_DSO_param[neg]
+    #     return m.P_C_set[neg, 0] >= m.info_P[neg]
     #
     # m.p_C_plus_limit = pyo.Constraint(m.negative_demand, rule=p_C_plus_limit_rule)
 

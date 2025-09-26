@@ -59,19 +59,19 @@ def build(m: pyo.ConcreteModel, G: Any) -> None:
         mutable=True,
     )
 
-    # Variables for power flows and squared quantities
-    m.F = pyo.Var(m.Lines, domain=pyo.Reals)
-    m.G = pyo.Var(m.Lines, domain=pyo.Reals)
-    m.I_sqr = pyo.Var(m.Lines, domain=pyo.NonNegativeReals)
-    m.V_sqr = pyo.Var(m.Nodes, domain=pyo.NonNegativeReals)
-
-    # Nodal injections and exchanges with outside of the operational graph
-    m.E = pyo.Var(m.Nodes, domain=pyo.Reals)
-    m.H = pyo.Var(m.Nodes, domain=pyo.Reals)
-    m.P_plus = pyo.Var(m.Nodes, domain=pyo.Reals)
-    m.P_minus = pyo.Var(m.Nodes, domain=pyo.Reals)
-    m.Q_plus = pyo.Var(m.Nodes, domain=pyo.Reals)
-    m.Q_minus = pyo.Var(m.Nodes, domain=pyo.Reals)
+    # # Variables for power flows and squared quantities
+    # m.F = pyo.Var(m.Lines, domain=pyo.Reals)
+    # m.G = pyo.Var(m.Lines, domain=pyo.Reals)
+    # m.I_sqr = pyo.Var(m.Lines, domain=pyo.NonNegativeReals)
+    # m.V_sqr = pyo.Var(m.Nodes, domain=pyo.NonNegativeReals)
+    #
+    # # Nodal injections and exchanges with outside of the operational graph
+    # m.E = pyo.Var(m.Nodes, domain=pyo.Reals)
+    # m.H = pyo.Var(m.Nodes, domain=pyo.Reals)
+    # m.P_plus = pyo.Var(m.Nodes, domain=pyo.Reals)
+    # m.P_minus = pyo.Var(m.Nodes, domain=pyo.Reals)
+    # m.Q_plus = pyo.Var(m.Nodes, domain=pyo.Reals)
+    # m.Q_minus = pyo.Var(m.Nodes, domain=pyo.Reals)
 
     def active_balance_rule(m, n):
         incoming = sum(m.F[i, j] for (i, j) in m.Lines if j == n)

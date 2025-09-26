@@ -13,7 +13,7 @@ def plot_DOE(m, filename="figures/DOE.pdf"):
     Parameters
     ----------
     m : pyomo.ConcreteModel
-        Solved DOE model providing ``P_C_set`` intervals and ``info_DSO_param``
+        Solved DOE model providing ``P_C_set`` intervals and ``info_P``
         values for child nodes.
     filename : str, optional
         Path where the PDF figure should be saved.
@@ -22,7 +22,7 @@ def plot_DOE(m, filename="figures/DOE.pdf"):
     children = list(m.children)
     p0 = [getattr(m.P_C_set[n, 0], "value", m.P_C_set[n, 0]) for n in children]
     p1 = [getattr(m.P_C_set[n, 1], "value", m.P_C_set[n, 1]) for n in children]
-    info = [getattr(m.info_DSO_param[n], "value", m.info_DSO_param[n]) for n in children]
+    info = [getattr(m.info_P[n], "value", m.info_P[n]) for n in children]
     x = np.arange(len(children))
 
     plt.figure(figsize=(5, 5))

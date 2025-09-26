@@ -254,7 +254,7 @@ def op_graph(full_graph: nx.Graph, operational_nodes: Set[int]) -> nx.Graph:
     return full_graph.subgraph(operational_nodes).copy()
 
 
-def compute_info_dso(
+def compute_info_P(
     G: nx.Graph,
     operational_nodes: Iterable[int],
     children_nodes: Iterable[int],
@@ -290,7 +290,7 @@ def compute_info_dso(
         # Par sûreté: 0.0 si l'attribut n'est pas présent
         return float(G.nodes[n].get(p_attr, 0.0))
 
-    info: Dict[int, float] = {}
+    info_P: Dict[int, float] = {}
 
     for c in children_set:
         total = node_power(c)
@@ -316,6 +316,7 @@ def compute_info_dso(
                     if w not in seen and w not in op_set:
                         q.append(w)
 
-        info[c] = total
+        info_P[c] = total
 
-    return info
+    return info_P
+

@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict
 import pyomo.environ as pyo
 
 from data.gurobi_config import get_wls_params
+
 #from test.run import parent_nodes, children_nodes #TODO: changer l'appel des parent et children
 
 PowerflowBuilder = Callable[[pyo.ConcreteModel, Any], None]
@@ -28,8 +29,8 @@ def build_sets(m: pyo.ConcreteModel,
     m.children = pyo.Set(initialize=children_nodes)
 
 def build_params(m: pyo.ConcreteModel,
-                 G: Any, nodes: list[Any],
-                 info_DSO,
+                 G: Any,
+                 info_P,
                  alpha,
                  beta,
                  P_min,
@@ -43,8 +44,6 @@ def build_params(m: pyo.ConcreteModel,
         Model to populate with parameters.
     G : networkx.Graph
         Electrical network providing nodal data and line attributes.
-    nodes, lines : list
-        Cached lists mirroring the Pyomo sets for convenience.
     params : dict
         Mapping expected to contain keys such as ``info_DSO``, ``alpha``,
         ``beta``, ``P_min`` and ``P_max``.  Missing values fall back to the
@@ -68,16 +67,16 @@ def build_params(m: pyo.ConcreteModel,
     m.NegativeNodes = pyo.Set(
         initialize=[n for n in m.Nodes if G.nodes[n].get("P", 0.0) < 0]
     )
-    m.info_DSO_param = pyo.Param(
+    m.info_P = pyo.Param(
         m.children,
-        initialize={n: float(info_DSO.get(n, 0.0)) for n in m.children},
+        initialize={n: float(info_P.get(n, 0.0)) for n in m.children},
         domain=pyo.Reals,
     )
     m.positive_demand = pyo.Set(
-        initialize=[n for n in m.children if pyo.value(m.info_DSO_param[n]) > 0]
+        initialize=[n for n in m.children if pyo.value(m.info_P[n]) > 0]
     )
     m.negative_demand = pyo.Set(
-        initialize=[n for n in m.children if pyo.value(m.info_DSO_param[n]) < 0]
+        initialize=[n for n in m.children if pyo.value(m.info_P[n]) < 0]
     )
     m.V_min = pyo.Param(initialize=0.9)
     m.V_max = pyo.Param(initialize=1.1)
@@ -149,8 +148,11 @@ def solve_model(
     #TODO: Vérifier cette fonction. La remplacer par create_pyo_env() si fausse.
     m = pyo.ConcreteModel()
 
-    nodes, lines, parents, children = build_sets(m, G, parent_nodes=parent_nodes, children_nodes=children_nodes)
-    build_params(m, G, nodes, lines, params, children)
+    parent_nodes = options.get("parent_nodes")
+    children_nodes = options.get("children_nodes")
+
+    build_sets(m, G, parent_nodes=parent_nodes, children_nodes=children_nodes)
+    build_params(m, G, info_P=None, alpha=None, beta=None, P_min=None, P_max=None)
     build_variables(m)
 
     powerflow_builder(m, G)

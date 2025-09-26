@@ -83,12 +83,8 @@ def optim_problem(
     children_op = list(set(children_nodes or []) & set(op_graph.nodes()))
 
     # calcul info_DSO depuis le graphe complet (hors périmètre)
-    info_DSO = graph.compute_info_dso(
-        G=full_graph,
-        operational_nodes=operational_nodes,
-        children_nodes=children_op,
-        p_attr="P",
-    )
+    info_DSO = graph.compute_info_P(G=full_graph, operational_nodes=operational_nodes, children_nodes=children_op,
+                                    p_attr="P")
 
     env_op = pyo_environment.create_pyo_env(
         graph=op_graph,

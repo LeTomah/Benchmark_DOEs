@@ -13,7 +13,7 @@ def plot_curtailment(m, filename="figures/Child_nodes_curtailment.pdf"):
     Parameters
     ----------
     m : pyomo.ConcreteModel
-        Solved DOE model exposing ``P_C_set`` intervals, ``info_DSO_param`` and
+        Solved DOE model exposing ``P_C_set`` intervals, ``info_P`` and
         net power ``E`` for child nodes.
     filename : str, optional
         Destination path for the generated PDF figure.
@@ -30,7 +30,7 @@ def plot_curtailment(m, filename="figures/Child_nodes_curtailment.pdf"):
     p_max = [getattr(m.P_C_set[n, 0], "value", m.P_C_set[n, 0]) for n in children]
     p_min = [getattr(m.P_C_set[n, 1], "value", m.P_C_set[n, 1]) for n in children]
     info = [
-        getattr(m.info_DSO_param[n], "value", m.info_DSO_param[n]) for n in children
+        getattr(m.info_P[n], "value", m.info_P[n]) for n in children
     ]
     e_vals = [getattr(m.E[n, 0, 0], "value", m.E[n, 0, 0]) for n in children]
     delta = [i - e for i, e in zip(info, e_vals)]

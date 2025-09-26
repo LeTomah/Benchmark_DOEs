@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
 from doe.utils.graph import (  # noqa: E402  (path injected above)
     build_graph_from_data,
     build_nx_from_pandapower,
-    compute_info_dso,
+    compute_info_P,
     create_graph,
     extract_network_data,
     op_graph,
@@ -138,6 +138,6 @@ def test_compute_info_dso_on_synthetic_graph():
     )
     G.add_edges_from([(1, 3), (2, 3), (3, 4), (4, 5)])
 
-    info = compute_info_dso(G, {1, 2}, {3})
+    info = compute_info_P(G, {1, 2}, {3})
     print("compute_info_dso ->", info)
     assert info == {3: pytest.approx(2.0)}
