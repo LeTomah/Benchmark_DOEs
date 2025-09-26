@@ -194,7 +194,7 @@ def create_pyo_env(
 # ---------------------------------------------------------------------------
 # Legacy solver pipeline preserved for backwards compatibility
 # ---------------------------------------------------------------------------
-"""
+
 def solve_model(
     G: Any,
     powerflow_builder: PowerflowBuilder,
@@ -203,13 +203,12 @@ def solve_model(
     params: Dict[str, Any],
     options: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
-    
-    Build and solve a DOE Pyomo model.
+    """Build and solve a DOE Pyomo model.
 
     The heavy lifting is now delegated to :func:`create_pyo_env`, which
     initialises the Pyomo environment.  The solving logic is retained so that
     existing callers keep working while the refactor is rolled out.
-    
+    """
 
     # The historical implementation created the Pyomo model directly.  The
     # block below is kept in comments for future reference during the refactor:
@@ -294,4 +293,3 @@ def solve_model(
             "solver": status,
         },
     }
-"""
